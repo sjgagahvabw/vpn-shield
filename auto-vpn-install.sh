@@ -651,6 +651,11 @@ main() {
     save_config
     generate_qr
     setup_auto_monitor
+    
+    # Запускаем первую проверку мониторинга сразу
+    print_info "Запуск первой проверки мониторинга..."
+    /usr/local/bin/vpn-monitor.sh > /dev/null 2>&1 || true
+    
     show_connection_info
 }
 
