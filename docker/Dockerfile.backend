@@ -1,0 +1,48 @@
+FROM golang:1.22-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache git build-base wget unzip
+
+WORKDIR /build
+
+# Copy go mod files
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o vpn-shield ./cmd/server
+
+# Download Xray-core
+RUN wget -O xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip && \
+    unzip xray.zip && \
+    chmod +x xray
+
+# Download Hysteria2
+RUN wget -O hysteria https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64 && \
+    chmod +x hysteria
+
+# Final stage
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates tzdata
+
+WORKDIR /app
+
+# Copy binaries
+COPY --from=builder /build/vpn-shield .
+COPY --from=builder /build/xray /usr/local/bin/xray
+COPY --from=builder /build/hysteria /usr/local/bin/hysteria
+
+# Copy configs
+COPY configs/ ./configs/
+
+# Create necessary directories
+RUN mkdir -p /var/lib/xray /var/lib/hysteria /var/log/vpn-shield
+
+# Expose ports
+EXPOSE 8080 443 8443 8444 36712/udp
+
+CMD ["./vpn-shield"]

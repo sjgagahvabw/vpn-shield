@@ -1,0 +1,75 @@
+# Environment files
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Config files with secrets
+**/configs/*.json
+**/configs/*.yaml
+!**/configs/*.example.json
+!**/configs/*.example.yaml
+
+# Build outputs
+dist/
+build/
+out/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+*.test
+*.out
+vendor/
+go.work
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+
+# Xray and Hysteria data
+xray-configs/*.json
+hysteria-configs/*.yaml
+!xray-configs/template.json
+!hysteria-configs/template.yaml
+
+# User data
+users/
+keys/
+certificates/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
