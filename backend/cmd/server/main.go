@@ -53,7 +53,8 @@ func main() {
 		AllowOrigins:     cfg.Server.AllowedOrigins,
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
-		AllowCredentials: false,
+		AllowCredentials: true,
+		MaxAge:           86400,
 	}))
 
 	// Setup routes

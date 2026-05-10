@@ -65,7 +65,7 @@ func Load() *Config {
 			Host:     getEnv("DB_HOST", "localhost"),
 			Port:     getEnv("DB_PORT", "5432"),
 			User:     getEnv("DB_USER", "vpnshield"),
-			Password: getEnv("DB_PASSWORD", "changeme"),
+			Password: getEnvRequired("DB_PASSWORD"),
 			DBName:   getEnv("DB_NAME", "vpnshield"),
 			SSLMode:  getEnv("DB_SSLMODE", "disable"),
 		},
@@ -76,7 +76,7 @@ func Load() *Config {
 			DB:       0,
 		},
 		JWT: JWTConfig{
-			Secret:     getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
+			Secret:     getEnvRequired("JWT_SECRET"),
 			Expiration: 24 * 7, // 7 days
 		},
 		Xray: XrayConfig{
@@ -97,6 +97,14 @@ func getEnv(key, defaultValue string) string {
 	value := os.Getenv(key)
 	if value == "" {
 		return defaultValue
+	}
+	return strings.TrimSpace(value)
+}
+
+func getEnvRequired(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		panic("Required environment variable " + key + " is not set")
 	}
 	return strings.TrimSpace(value)
 }

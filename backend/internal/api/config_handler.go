@@ -328,10 +328,15 @@ func (h *ConfigHandler) generateREALITYURL(userID string, settings map[string]in
 	// VLESS+REALITY URL format
 	// vless://uuid@server:port?security=reality&sni=example.com&fp=chrome&pbk=publickey&sid=shortid&type=tcp&flow=xtls-rprx-vision#name
 	
+	serverAddr := getSettingString(settings, "server", "")
+	if serverAddr == "" {
+		serverAddr = "SET_YOUR_SERVER_ADDRESS"
+	}
+	
 	config := map[string]interface{}{
 		"protocol": "vless",
 		"uuid":     userID,
-		"server":   "your-server.com",
+		"server":   serverAddr,
 		"port":     443,
 		"security": "reality",
 		"sni":      "www.microsoft.com",
@@ -344,27 +349,42 @@ func (h *ConfigHandler) generateREALITYURL(userID string, settings map[string]in
 	return "vless://" + base64.StdEncoding.EncodeToString(configJSON)
 }
 
+func getSettingString(settings map[string]interface{}, key, defaultValue string) string {
+	if val, ok := settings[key]; ok {
+		if str, ok := val.(string); ok {
+			return str
+		}
+	}
+	return defaultValue
+}
+
 func (h *ConfigHandler) generateHysteriaURL(userID string, settings map[string]interface{}) string {
 	// Hysteria2 URL format
 	// hysteria2://password@server:port?sni=example.com&obfs=salamander&obfs-password=pass#name
 	
-	return fmt.Sprintf("hysteria2://%s@your-server.com:%s?sni=your-server.com&obfs=salamander#Hysteria2",
-		userID, h.cfg.Hysteria.Port)
+	serverAddr := getSettingString(settings, "server", "SET_YOUR_SERVER_ADDRESS")
+	
+	return fmt.Sprintf("hysteria2://%s@%s:%s?sni=%s&obfs=salamander#Hysteria2",
+		userID, serverAddr, h.cfg.Hysteria.Port, serverAddr)
 }
 
 func (h *ConfigHandler) generateTrojanURL(userID string, settings map[string]interface{}) string {
 	// Trojan URL format
 	// trojan://password@server:port?sni=example.com&type=tcp#name
 	
-	return fmt.Sprintf("trojan://%s@your-server.com:8444?sni=your-server.com&type=tcp#Trojan", userID)
+	serverAddr := getSettingString(settings, "server", "SET_YOUR_SERVER_ADDRESS")
+	
+	return fmt.Sprintf("trojan://%s@%s:8444?sni=%s&type=tcp#Trojan", userID, serverAddr, serverAddr)
 }
 
 func (h *ConfigHandler) generateVMessURL(userID string, settings map[string]interface{}) string {
 	// VMess URL format (base64 encoded JSON)
+	serverAddr := getSettingString(settings, "server", "SET_YOUR_SERVER_ADDRESS")
+	
 	config := map[string]interface{}{
 		"v":    "2",
 		"ps":   "VMess",
-		"add":  "your-server.com",
+		"add":  serverAddr,
 		"port": "8443",
 		"id":   userID,
 		"aid":  "0",
@@ -383,5 +403,7 @@ func (h *ConfigHandler) generateNaiveURL(userID string, settings map[string]inte
 	// Naive Proxy URL format
 	// https://username:password@server:port
 	
-	return fmt.Sprintf("https://%s:password@your-server.com:443", userID)
+	serverAddr := getSettingString(settings, "server", "SET_YOUR_SERVER_ADDRESS")
+	
+	return fmt.Sprintf("https://%s:password@%s:443", userID, serverAddr)
 }

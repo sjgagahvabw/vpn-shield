@@ -76,7 +76,7 @@ func SetupRoutes(app *fiber.App, database *db.Database, cfg *config.Config) {
 	audit.Get("/", auditHandler.GetAuditLogs)
 
 	// WebSocket for real-time updates
-	app.Get("/ws", AuthMiddleware(cfg.JWT.Secret), NewWebSocketHandler(database))
+	app.Get("/ws", NewWebSocketHandler(database, cfg.JWT.Secret))
 }
 
 // ErrorHandler handles all errors

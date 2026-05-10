@@ -77,7 +77,7 @@ func (d *Database) CreateDefaultAdmin() error {
 	
 	adminPassword := os.Getenv("ADMIN_PASSWORD")
 	if adminPassword == "" {
-		adminPassword = "admin123"
+		log.Fatal("❌ ADMIN_PASSWORD environment variable must be set for security reasons")
 	}
 	
 	adminEmail := os.Getenv("ADMIN_EMAIL")

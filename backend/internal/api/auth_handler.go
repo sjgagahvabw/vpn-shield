@@ -1,6 +1,7 @@
 package api
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -53,6 +54,27 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	if req.Username == "" || req.Email == "" || req.Password == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Username, email and password are required",
+		})
+	}
+	
+	// Validate username length
+	if len(req.Username) < 3 || len(req.Username) > 50 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Username must be between 3 and 50 characters",
+		})
+	}
+	
+	// Validate password strength
+	if len(req.Password) < 8 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Password must be at least 8 characters long",
+		})
+	}
+	
+	// Basic email validation
+	if !strings.Contains(req.Email, "@") || !strings.Contains(req.Email, ".") {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid email format",
 		})
 	}
 
