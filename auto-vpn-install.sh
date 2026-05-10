@@ -63,6 +63,17 @@ install_xray() {
     print_success "Xray-core установлен"
 }
 
+test_site() {
+    local site=$1
+    local domain=$(echo "$site" | cut -d':' -f1)
+    
+    # Проверяем доступность через curl с таймаутом
+    if timeout 5 curl -s -o /dev/null -w "%{http_code}" "https://$domain" | grep -q "200\|301\|302"; then
+        return 0
+    fi
+    return 1
+}
+
 generate_config() {
     print_info "Генерация конфигурации..."
     
@@ -82,27 +93,55 @@ generate_config() {
     # Генерируем Short ID
     SHORT_ID=$(openssl rand -hex 8)
     
-    # Белый список РФ - сайты которые НИКОГДА не заблокируют
-    # Используем госсайты и критическую инфраструктуру
-    WHITELIST_SITES=(
-        "www.gosuslugi.ru:443|www.gosuslugi.ru,esia.gosuslugi.ru"
-        "www.nalog.gov.ru:443|www.nalog.gov.ru,lkfl2.nalog.ru"
-        "www.mos.ru:443|www.mos.ru,my.mos.ru"
-        "www.sberbank.ru:443|www.sberbank.ru,online.sberbank.ru"
-        "www.vtb.ru:443|www.vtb.ru,online.vtb.ru"
-        "www.gazprom.ru:443|www.gazprom.ru"
-        "www.rzd.ru:443|www.rzd.ru,pass.rzd.ru"
-        "www.rt.com:443|www.rt.com,russian.rt.com"
+    print_info "Поиск рабочего сайта для маскировки..."
+    
+    # Список популярных сайтов для маскировки (CDN, крупные сервисы)
+    CANDIDATE_SITES=(
+        "www.microsoft.com:443|www.microsoft.com,login.microsoft.com"
+        "www.apple.com:443|www.apple.com,www.icloud.com"
+        "www.cloudflare.com:443|www.cloudflare.com,dash.cloudflare.com"
+        "www.amazon.com:443|www.amazon.com,aws.amazon.com"
+        "www.cisco.com:443|www.cisco.com,www.webex.com"
+        "www.oracle.com:443|www.oracle.com,cloud.oracle.com"
+        "www.ibm.com:443|www.ibm.com,cloud.ibm.com"
+        "www.samsung.com:443|www.samsung.com"
+        "www.logitech.com:443|www.logitech.com"
+        "www.zoom.us:443|www.zoom.us,zoom.us"
+        "www.booking.com:443|www.booking.com"
+        "www.speedtest.net:443|www.speedtest.net"
+        "www.ubuntu.com:443|www.ubuntu.com"
+        "www.debian.org:443|www.debian.org"
     )
     
-    # Выбираем случайный сайт из белого списка
-    RANDOM_INDEX=$((RANDOM % ${#WHITELIST_SITES[@]}))
-    SELECTED="${WHITELIST_SITES[$RANDOM_INDEX]}"
+    DEST=""
+    SNI_PRIMARY=""
+    SNI_SECONDARY=""
     
-    DEST=$(echo "$SELECTED" | cut -d'|' -f1)
-    SNI_LIST=$(echo "$SELECTED" | cut -d'|' -f2)
-    SNI_PRIMARY=$(echo "$SNI_LIST" | cut -d',' -f1)
-    SNI_SECONDARY=$(echo "$SNI_LIST" | cut -d',' -f2)
+    # Проверяем каждый сайт
+    for site_config in "${CANDIDATE_SITES[@]}"; do
+        site=$(echo "$site_config" | cut -d'|' -f1)
+        domain=$(echo "$site" | cut -d':' -f1)
+        
+        print_info "Проверка: $domain..."
+        
+        if test_site "$site"; then
+            DEST="$site"
+            SNI_LIST=$(echo "$site_config" | cut -d'|' -f2)
+            SNI_PRIMARY=$(echo "$SNI_LIST" | cut -d',' -f1)
+            SNI_SECONDARY=$(echo "$SNI_LIST" | cut -d',' -f2)
+            
+            print_success "✓ Найден рабочий сайт: $SNI_PRIMARY"
+            break
+        fi
+    done
+    
+    # Если не нашли рабочий сайт, используем запасной
+    if [ -z "$DEST" ]; then
+        print_warning "Используем запасной вариант: www.cloudflare.com"
+        DEST="www.cloudflare.com:443"
+        SNI_PRIMARY="www.cloudflare.com"
+        SNI_SECONDARY="dash.cloudflare.com"
+    fi
     
     print_info "Маскировка под: $SNI_PRIMARY"
     
