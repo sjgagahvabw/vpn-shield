@@ -3,9 +3,12 @@ package db
 import (
 	"fmt"
 	"log"
+	"os"
 
+	"github.com/google/uuid"
 	"github.com/vpn-shield/backend/internal/config"
 	"github.com/vpn-shield/backend/internal/models"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -49,6 +52,58 @@ func (d *Database) Migrate() error {
 	}
 
 	log.Println("✅ Database migrations completed")
+	
+	// Create default admin user if no users exist
+	if err := d.CreateDefaultAdmin(); err != nil {
+		return fmt.Errorf("failed to create default admin: %w", err)
+	}
+	
+	return nil
+}
+
+func (d *Database) CreateDefaultAdmin() error {
+	var count int64
+	d.DB.Model(&models.User{}).Count(&count)
+	
+	if count > 0 {
+		log.Println("ℹ️  Users already exist, skipping admin creation")
+		return nil
+	}
+	
+	adminUsername := os.Getenv("ADMIN_USERNAME")
+	if adminUsername == "" {
+		adminUsername = "admin"
+	}
+	
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
+	if adminPassword == "" {
+		adminPassword = "admin123"
+	}
+	
+	adminEmail := os.Getenv("ADMIN_EMAIL")
+	if adminEmail == "" {
+		adminEmail = "admin@example.com"
+	}
+	
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+	
+	admin := &models.User{
+		ID:       uuid.New(),
+		Username: adminUsername,
+		Email:    adminEmail,
+		Password: string(hashedPassword),
+		IsAdmin:  true,
+		IsActive: true,
+	}
+	
+	if err := d.DB.Create(admin).Error; err != nil {
+		return fmt.Errorf("failed to create admin user: %w", err)
+	}
+	
+	log.Printf("✅ Default admin user created: %s", adminUsername)
 	return nil
 }
 
