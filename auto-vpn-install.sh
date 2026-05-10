@@ -216,8 +216,7 @@ generate_config() {
       {
         "type": "field",
         "domain": [
-          "geosite:category-ads-all",
-          "geosite:category-ads-ru"
+          "geosite:category-ads-all"
         ],
         "outboundTag": "block"
       },
