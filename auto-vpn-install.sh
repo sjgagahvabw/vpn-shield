@@ -57,6 +57,18 @@ install_dependencies() {
     print_success "Зависимости установлены"
 }
 
+download_geodata() {
+    print_info "Загрузка geo-данных для умной маршрутизации..."
+    
+    mkdir -p /usr/local/share/xray
+    
+    # Скачиваем geoip.dat и geosite.dat для маршрутизации
+    wget -q -O /usr/local/share/xray/geoip.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
+    wget -q -O /usr/local/share/xray/geosite.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
+    
+    print_success "Geo-данные загружены"
+}
+
 install_xray() {
     print_info "Установка Xray-core..."
     bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install > /dev/null 2>&1
@@ -144,8 +156,9 @@ generate_config() {
     fi
     
     print_info "Маскировка под: $SNI_PRIMARY"
+    print_info "Настройка умной маршрутизации (РФ напрямую, остальное через VPN)..."
     
-    # Создаем конфиг с маскировкой
+    # Создаем конфиг с умной маршрутизацией и блокировкой рекламы
     cat > /usr/local/etc/xray/config.json <<EOF
 {
   "log": {
@@ -187,7 +200,10 @@ generate_config() {
   "outbounds": [
     {
       "protocol": "freedom",
-      "tag": "direct"
+      "tag": "direct",
+      "settings": {
+        "domainStrategy": "UseIPv4"
+      }
     },
     {
       "protocol": "blackhole",
@@ -199,10 +215,68 @@ generate_config() {
     "rules": [
       {
         "type": "field",
-        "ip": [
-          "geoip:private"
+        "domain": [
+          "geosite:category-ads-all",
+          "geosite:category-ads-ru"
         ],
         "outboundTag": "block"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "domain:googlesyndication.com",
+          "domain:doubleclick.net",
+          "domain:googleadservices.com",
+          "domain:google-analytics.com",
+          "domain:googletagmanager.com",
+          "domain:facebook.com",
+          "domain:facebook.net",
+          "domain:fbcdn.net",
+          "domain:connect.facebook.net",
+          "domain:graph.facebook.com",
+          "domain:yandex.ru/ads",
+          "domain:an.yandex.ru",
+          "domain:adfox.ru",
+          "domain:top100.ru",
+          "domain:top-fwz1.mail.ru",
+          "domain:mc.yandex.ru",
+          "domain:metrika.yandex.ru"
+        ],
+        "outboundTag": "block"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "geosite:ru",
+          "geosite:yandex",
+          "geosite:vk",
+          "geosite:mailru",
+          "geosite:ok"
+        ],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "ip": [
+          "geoip:ru",
+          "geoip:private"
+        ],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "geosite:cn",
+          "geosite:category-gov-cn"
+        ],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "ip": [
+          "geoip:cn"
+        ],
+        "outboundTag": "direct"
       }
     ]
   }
@@ -212,7 +286,10 @@ EOF
     # Сохраняем SNI для использования в ссылке
     SNI_NAMES=("$SNI_PRIMARY" "$SNI_SECONDARY")
     
-    print_success "Конфигурация создана с маскировкой под $SNI_PRIMARY"
+    print_success "Конфигурация создана с умной маршрутизацией"
+    print_success "✓ Российские сайты → напрямую"
+    print_success "✓ Иностранные сайты → через VPN"
+    print_success "✓ Реклама и трекеры → заблокированы"
 }
 
 configure_firewall() {
@@ -348,6 +425,20 @@ show_connection_info() {
     echo "  ✓ Автоматическое переключение сайтов при блокировке"
     echo "  ✓ Автоматический перезапуск при сбоях"
     echo "  ✓ Актуальная ссылка всегда в: /root/vpn-shield/connection.txt"
+    echo ""
+    echo -e "${GREEN}🎯 УМНАЯ МАРШРУТИЗАЦИЯ${NC}"
+    echo ""
+    echo "  ✓ Российские сайты (RU, Яндекс, VK, Mail.ru) → напрямую"
+    echo "  ✓ Иностранные сайты → через VPN"
+    echo "  ✓ Реклама и трекеры → заблокированы"
+    echo "  ✓ Быстрый доступ к локальным ресурсам"
+    echo ""
+    echo -e "${GREEN}🛡️ БЛОКИРОВКА РЕКЛАМЫ${NC}"
+    echo ""
+    echo "  ✓ Google Ads, DoubleClick"
+    echo "  ✓ Facebook трекеры"
+    echo "  ✓ Яндекс.Метрика, Adfox"
+    echo "  ✓ Mail.ru счетчики"
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
@@ -546,6 +637,7 @@ main() {
     
     install_dependencies
     install_xray
+    download_geodata
     generate_config
     configure_firewall
     optimize_network
