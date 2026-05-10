@@ -200,7 +200,7 @@ cd "$INSTALL_DIR"
 
 # Клонирование репозитория
 print_info "Клонирование VPN Shield..."
-REPO_URL="https://github.com/sjgagahvabw/vpn-shield.git"
+REPO_URL="${VPN_SHIELD_REPO_URL:-https://github.com/YOUR_USERNAME/vpn-shield.git}"
 
 if git clone "$REPO_URL" . 2>/dev/null; then
     print_success "Репозиторий клонирован"
@@ -208,8 +208,9 @@ else
     print_error "Не удалось клонировать репозиторий"
     print_info "Убедитесь, что:"
     print_info "1. Вы загрузили код на GitHub"
-    print_info "2. URL репозитория правильный"
+    print_info "2. URL репозитория правильный: $REPO_URL"
     print_info "3. Репозиторий публичный или у вас есть доступ"
+    print_info "4. Или установите переменную: export VPN_SHIELD_REPO_URL=https://github.com/YOUR_USERNAME/vpn-shield.git"
     exit 1
 fi
 

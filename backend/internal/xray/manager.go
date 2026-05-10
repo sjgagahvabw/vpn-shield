@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/vpn-shield/backend/internal/config"
@@ -295,7 +296,20 @@ func (m *Manager) GenerateKeys() (privateKey, publicKey string, err error) {
 	// Parse output to extract keys
 	// Format: Private key: xxx\nPublic key: yyy
 	lines := string(output)
-	// TODO: Parse the output properly
 	
-	return "private_key_placeholder", "public_key_placeholder", nil
+	var privateKey, publicKey string
+	for _, line := range strings.Split(lines, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "Private key:") {
+			privateKey = strings.TrimSpace(strings.TrimPrefix(line, "Private key:"))
+		} else if strings.HasPrefix(line, "Public key:") {
+			publicKey = strings.TrimSpace(strings.TrimPrefix(line, "Public key:"))
+		}
+	}
+	
+	if privateKey == "" || publicKey == "" {
+		return "", "", fmt.Errorf("failed to parse keys from xray output: %s", lines)
+	}
+	
+	return privateKey, publicKey, nil
 }
