@@ -36,11 +36,8 @@ COPY --from=builder /build/vpn-shield .
 COPY --from=builder /build/xray /usr/local/bin/xray
 COPY --from=builder /build/hysteria /usr/local/bin/hysteria
 
-# Copy configs
-COPY configs/ ./configs/
-
 # Create necessary directories
-RUN mkdir -p /var/lib/xray /var/lib/hysteria /var/log/vpn-shield
+RUN mkdir -p /var/lib/xray /var/lib/hysteria /var/log/vpn-shield /app/configs
 
 # Expose ports
 EXPOSE 8080 443 8443 8444 36712/udp
