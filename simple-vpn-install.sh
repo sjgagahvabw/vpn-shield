@@ -43,13 +43,24 @@ print_success "Xray установлен"
 
 # Generate keys
 print_info "Генерация ключей..."
-KEYS=$(xray x25519)
-PRIVATE_KEY=$(echo "$KEYS" | grep "Private key:" | awk '{print $3}')
-PUBLIC_KEY=$(echo "$KEYS" | grep "Public key:" | awk '{print $3}')
 UUID=$(cat /proc/sys/kernel/random/uuid)
 SHORT_ID=$(openssl rand -hex 8)
 
+# Generate X25519 keys
+KEYS_OUTPUT=$(/usr/local/bin/xray x25519 2>&1)
+PRIVATE_KEY=$(echo "$KEYS_OUTPUT" | grep -oP 'Private key: \K[A-Za-z0-9_-]+')
+PUBLIC_KEY=$(echo "$KEYS_OUTPUT" | grep -oP 'Public key: \K[A-Za-z0-9_-]+')
+
+if [ -z "$PRIVATE_KEY" ] || [ -z "$PUBLIC_KEY" ]; then
+    print_error "Не удалось сгенерировать ключи"
+    echo "Вывод xray x25519:"
+    echo "$KEYS_OUTPUT"
+    exit 1
+fi
+
 print_success "Ключи сгенерированы"
+print_info "Private: $PRIVATE_KEY"
+print_info "Public: $PUBLIC_KEY"
 
 # Create Xray config
 print_info "Создание конфигурации..."
