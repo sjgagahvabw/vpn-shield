@@ -105,24 +105,21 @@ generate_config() {
     # Генерируем Short ID
     SHORT_ID=$(openssl rand -hex 8)
     
+    # Генерируем пароли для других протоколов
+    TROJAN_PASSWORD=$(openssl rand -base64 16)
+    HYSTERIA_PASSWORD=$(openssl rand -base64 16)
+    
     print_info "Поиск рабочего сайта для маскировки..."
     
-    # Список популярных сайтов для маскировки (CDN, крупные сервисы)
+    # Список популярных сайтов для маскировки
     CANDIDATE_SITES=(
         "www.microsoft.com:443|www.microsoft.com,login.microsoft.com"
         "www.apple.com:443|www.apple.com,www.icloud.com"
         "www.cloudflare.com:443|www.cloudflare.com,dash.cloudflare.com"
         "www.amazon.com:443|www.amazon.com,aws.amazon.com"
         "www.cisco.com:443|www.cisco.com,www.webex.com"
-        "www.oracle.com:443|www.oracle.com,cloud.oracle.com"
-        "www.ibm.com:443|www.ibm.com,cloud.ibm.com"
-        "www.samsung.com:443|www.samsung.com"
-        "www.logitech.com:443|www.logitech.com"
         "www.zoom.us:443|www.zoom.us,zoom.us"
-        "www.booking.com:443|www.booking.com"
         "www.speedtest.net:443|www.speedtest.net"
-        "www.ubuntu.com:443|www.ubuntu.com"
-        "www.debian.org:443|www.debian.org"
     )
     
     DEST=""
@@ -156,9 +153,9 @@ generate_config() {
     fi
     
     print_info "Маскировка под: $SNI_PRIMARY"
-    print_info "Настройка умной маршрутизации (РФ напрямую, остальное через VPN)..."
+    print_info "Создание мультипротокольной конфигурации..."
     
-    # Создаем конфиг с умной маршрутизацией и блокировкой рекламы
+    # Создаем конфиг с несколькими протоколами
     cat > /usr/local/etc/xray/config.json <<EOF
 {
   "log": {
@@ -168,6 +165,7 @@ generate_config() {
     {
       "port": 443,
       "protocol": "vless",
+      "tag": "vless-reality",
       "settings": {
         "clients": [
           {
@@ -195,100 +193,94 @@ generate_config() {
           ]
         }
       }
+    },
+    {
+      "port": 8443,
+      "protocol": "vmess",
+      "tag": "vmess-ws",
+      "settings": {
+        "clients": [
+          {
+            "id": "$UUID",
+            "alterId": 0
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "security": "none",
+        "wsSettings": {
+          "path": "/vmess"
+        }
+      }
+    },
+    {
+      "port": 8444,
+      "protocol": "trojan",
+      "tag": "trojan-tcp",
+      "settings": {
+        "clients": [
+          {
+            "password": "$TROJAN_PASSWORD"
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "none"
+      }
+    },
+    {
+      "port": 36712,
+      "protocol": "dokodemo-door",
+      "tag": "hysteria2",
+      "settings": {
+        "network": "udp",
+        "followRedirect": false
+      },
+      "streamSettings": {
+        "network": "udp"
+      }
     }
   ],
   "outbounds": [
     {
       "protocol": "freedom",
-      "tag": "direct",
-      "settings": {
-        "domainStrategy": "UseIPv4"
-      }
-    },
-    {
-      "protocol": "blackhole",
-      "tag": "block"
+      "tag": "direct"
     }
-  ],
-  "routing": {
-    "domainStrategy": "IPIfNonMatch",
-    "rules": [
-      {
-        "type": "field",
-        "domain": [
-          "geosite:category-ads-all"
-        ],
-        "outboundTag": "block"
-      },
-      {
-        "type": "field",
-        "domain": [
-          "domain:googlesyndication.com",
-          "domain:doubleclick.net",
-          "domain:googleadservices.com",
-          "domain:google-analytics.com",
-          "domain:googletagmanager.com",
-          "domain:facebook.com",
-          "domain:facebook.net",
-          "domain:fbcdn.net",
-          "domain:connect.facebook.net",
-          "domain:graph.facebook.com",
-          "domain:yandex.ru/ads",
-          "domain:an.yandex.ru",
-          "domain:adfox.ru",
-          "domain:top100.ru",
-          "domain:top-fwz1.mail.ru",
-          "domain:mc.yandex.ru",
-          "domain:metrika.yandex.ru"
-        ],
-        "outboundTag": "block"
-      },
-      {
-        "type": "field",
-        "domain": [
-          "geosite:ru",
-          "geosite:yandex",
-          "geosite:vk",
-          "geosite:mailru",
-          "geosite:ok"
-        ],
-        "outboundTag": "direct"
-      },
-      {
-        "type": "field",
-        "ip": [
-          "geoip:ru",
-          "geoip:private"
-        ],
-        "outboundTag": "direct"
-      },
-      {
-        "type": "field",
-        "domain": [
-          "geosite:cn",
-          "geosite:category-gov-cn"
-        ],
-        "outboundTag": "direct"
-      },
-      {
-        "type": "field",
-        "ip": [
-          "geoip:cn"
-        ],
-        "outboundTag": "direct"
-      }
-    ]
-  }
+  ]
 }
+EOF
+    
+    # Создаем конфиг Hysteria2
+    mkdir -p /etc/hysteria
+    cat > /etc/hysteria/config.yaml <<EOF
+listen: :36712
+
+acme:
+  domains:
+    - $SNI_PRIMARY
+  email: admin@$SNI_PRIMARY
+
+auth:
+  type: password
+  password: $HYSTERIA_PASSWORD
+
+masquerade:
+  type: proxy
+  proxy:
+    url: https://$SNI_PRIMARY
+    rewriteHost: true
 EOF
     
     # Сохраняем SNI для использования в ссылке
     SNI_NAMES=("$SNI_PRIMARY" "$SNI_SECONDARY")
     
-    print_success "Конфигурация создана с умной маршрутизацией"
-    print_success "✓ Российские сайты → напрямую"
-    print_success "✓ Иностранные сайты → через VPN"
-    print_success "✓ Реклама и трекеры → заблокированы"
+    print_success "Мультипротокольная конфигурация создана"
+    print_success "✓ VLESS (REALITY) на порту 443"
+    print_success "✓ VMess (WebSocket) на порту 8443"
+    print_success "✓ Trojan на порту 8444"
+    print_success "✓ Hysteria2 на порту 36712/UDP"
 }
 
 configure_firewall() {
@@ -298,9 +290,15 @@ configure_firewall() {
         ufw --force enable > /dev/null 2>&1
         ufw allow 22/tcp > /dev/null 2>&1
         ufw allow 443/tcp > /dev/null 2>&1
+        ufw allow 8443/tcp > /dev/null 2>&1
+        ufw allow 8444/tcp > /dev/null 2>&1
+        ufw allow 36712/udp > /dev/null 2>&1
         print_success "UFW настроен"
     elif command -v firewall-cmd &> /dev/null; then
         firewall-cmd --permanent --add-port=443/tcp > /dev/null 2>&1
+        firewall-cmd --permanent --add-port=8443/tcp > /dev/null 2>&1
+        firewall-cmd --permanent --add-port=8444/tcp > /dev/null 2>&1
+        firewall-cmd --permanent --add-port=36712/udp > /dev/null 2>&1
         firewall-cmd --reload > /dev/null 2>&1
         print_success "Firewalld настроен"
     fi
@@ -346,28 +344,57 @@ save_config() {
     mkdir -p /root/vpn-shield
     
     cat > /root/vpn-shield/info.txt <<EOF
-VPN Shield Configuration
-========================
+VPN Shield Multi-Protocol Configuration
+========================================
 
 Server IP: $SERVER_IP
 UUID: $UUID
 Public Key: $PUBLIC_KEY
 Short ID: $SHORT_ID
 SNI: ${SNI_NAMES[0]}
+Trojan Password: $TROJAN_PASSWORD
+Hysteria Password: $HYSTERIA_PASSWORD
 
-Connection Link:
-$VLESS_LINK
+Protocols:
+----------
+1. VLESS (REALITY) - Port 443
+2. VMess (WebSocket) - Port 8443
+3. Trojan - Port 8444
+4. Hysteria2 - Port 36712/UDP
 
-Управление:
-- Статус: systemctl status xray
-- Перезапуск: systemctl restart xray
-- Логи: journalctl -u xray -f
-- Конфиг: /usr/local/etc/xray/config.json
+Connection Links:
+-----------------
+REALITY: $VLESS_LINK
+VMess: $VMESS_LINK
+Trojan: $TROJAN_LINK
+Hysteria2: $HYSTERIA_LINK
 
-Установлено: $(date)
+Management:
+-----------
+Status: systemctl status xray
+Restart: systemctl restart xray
+Logs: journalctl -u xray -f
+Monitor: tail -f /var/log/vpn-shield-monitor.log
+
+Installed: $(date)
 EOF
     
-    echo "$VLESS_LINK" > /root/vpn-shield/connection.txt
+    # Сохраняем все ссылки
+    cat > /root/vpn-shield/connection.txt <<EOF
+# VPN Shield - Multi-Protocol Links
+
+# REALITY (Recommended - Best stealth)
+$VLESS_LINK
+
+# VMess (Universal - CDN compatible)
+$VMESS_LINK
+
+# Trojan (Reliable backup)
+$TROJAN_LINK
+
+# Hysteria2 (Fastest for mobile)
+$HYSTERIA_LINK
+EOF
 }
 
 generate_qr() {
@@ -384,9 +411,15 @@ show_connection_info() {
     echo -e "${GREEN}║                                                       ║${NC}"
     echo -e "${GREEN}╚═══════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "${CYAN}📱 ССЫЛКА ДЛЯ ПОДКЛЮЧЕНИЯ:${NC}"
+    echo -e "${CYAN}📱 МУЛЬТИПРОТОКОЛЬНАЯ ПОДПИСКА:${NC}"
     echo ""
-    echo -e "${YELLOW}$VLESS_LINK${NC}"
+    echo -e "${YELLOW}${VLESS_LINK}${NC}"
+    echo ""
+    echo -e "${YELLOW}${VMESS_LINK}${NC}"
+    echo ""
+    echo -e "${YELLOW}${TROJAN_LINK}${NC}"
+    echo ""
+    echo -e "${YELLOW}${HYSTERIA_LINK}${NC}"
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
@@ -402,15 +435,21 @@ show_connection_info() {
     echo ""
     echo -e "${BLUE}📋 Инструкция:${NC}"
     echo ""
-    echo "  1. Скопируйте ссылку выше"
+    echo "  1. Скопируйте любую ссылку выше"
     echo "  2. Откройте VPN приложение"
     echo "  3. Нажмите '+' или 'Добавить'"
     echo "  4. Вставьте ссылку"
     echo "  5. Подключитесь!"
     echo ""
+    echo -e "${BLUE}💡 Рекомендуем:${NC}"
+    echo "  • REALITY (443) - самый стелс, лучший обход блокировок"
+    echo "  • Hysteria2 (36712) - самый быстрый для мобильных сетей"
+    echo "  • VMess (8443) - универсальный, работает через CDN"
+    echo "  • Trojan (8444) - надежный запасной вариант"
+    echo ""
     
     if [ -f /root/vpn-shield/qr.txt ]; then
-        echo -e "${BLUE}📊 QR-код:${NC}"
+        echo -e "${BLUE}📊 QR-код (REALITY):${NC}"
         echo ""
         cat /root/vpn-shield/qr.txt
         echo ""
@@ -420,24 +459,10 @@ show_connection_info() {
     echo ""
     echo -e "${GREEN}🤖 АВТОМАТИЧЕСКИЙ МОНИТОРИНГ ВКЛЮЧЕН${NC}"
     echo ""
-    echo "  ✓ VPN проверяется каждые 5 минут"
+    echo "  ✓ VPN проверяется каждые 3 минуты"
     echo "  ✓ Автоматическое переключение сайтов при блокировке"
     echo "  ✓ Автоматический перезапуск при сбоях"
-    echo "  ✓ Актуальная ссылка всегда в: /root/vpn-shield/connection.txt"
-    echo ""
-    echo -e "${GREEN}🎯 УМНАЯ МАРШРУТИЗАЦИЯ${NC}"
-    echo ""
-    echo "  ✓ Российские сайты (RU, Яндекс, VK, Mail.ru) → напрямую"
-    echo "  ✓ Иностранные сайты → через VPN"
-    echo "  ✓ Реклама и трекеры → заблокированы"
-    echo "  ✓ Быстрый доступ к локальным ресурсам"
-    echo ""
-    echo -e "${GREEN}🛡️ БЛОКИРОВКА РЕКЛАМЫ${NC}"
-    echo ""
-    echo "  ✓ Google Ads, DoubleClick"
-    echo "  ✓ Facebook трекеры"
-    echo "  ✓ Яндекс.Метрика, Adfox"
-    echo "  ✓ Mail.ru счетчики"
+    echo "  ✓ Актуальные ссылки всегда в: /root/vpn-shield/connection.txt"
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
@@ -446,10 +471,10 @@ show_connection_info() {
     echo "     systemctl status xray              - статус VPN"
     echo "     systemctl restart xray             - перезапуск VPN"
     echo "     tail -f /var/log/vpn-shield-monitor.log - логи мониторинга"
-    echo "     cat /root/vpn-shield/connection.txt - актуальная ссылка"
+    echo "     cat /root/vpn-shield/connection.txt - все ссылки"
     echo ""
-    echo -e "${GREEN}✨ VPN работает полностью автоматически!${NC}"
-    echo -e "${GREEN}   Ссылка будет обновляться автоматически при смене маскировки${NC}"
+    echo -e "${GREEN}✨ 4 протокола работают одновременно!${NC}"
+    echo -e "${GREEN}   Выберите любой или используйте все для максимальной надежности${NC}"
     echo ""
 }
 
@@ -646,7 +671,16 @@ main() {
     fi
     
     # Генерируем ссылку для подключения
-    VLESS_LINK="vless://${UUID}@${SERVER_IP}:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${SNI_NAMES[0]}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&type=tcp&headerType=none#VPN-Shield"
+    VLESS_LINK="vless://${UUID}@${SERVER_IP}:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${SNI_NAMES[0]}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&type=tcp&headerType=none#VPN-Shield-REALITY"
+    
+    VMESS_LINK="vmess://$(echo -n "{\"v\":\"2\",\"ps\":\"VPN-Shield-VMess\",\"add\":\"${SERVER_IP}\",\"port\":\"8443\",\"id\":\"${UUID}\",\"aid\":\"0\",\"net\":\"ws\",\"type\":\"none\",\"host\":\"\",\"path\":\"/vmess\",\"tls\":\"\"}" | base64 -w 0)"
+    
+    TROJAN_LINK="trojan://${TROJAN_PASSWORD}@${SERVER_IP}:8444?security=none&type=tcp#VPN-Shield-Trojan"
+    
+    HYSTERIA_LINK="hysteria2://${HYSTERIA_PASSWORD}@${SERVER_IP}:36712?sni=${SNI_NAMES[0]}#VPN-Shield-Hysteria2"
+    
+    # Создаем подписку (base64 encoded список ссылок)
+    SUBSCRIPTION=$(echo -e "${VLESS_LINK}\n${VMESS_LINK}\n${TROJAN_LINK}\n${HYSTERIA_LINK}" | base64 -w 0)
     
     save_config
     generate_qr
