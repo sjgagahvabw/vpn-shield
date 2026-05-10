@@ -342,14 +342,197 @@ show_connection_info() {
     
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
+    echo -e "${GREEN}🤖 АВТОМАТИЧЕСКИЙ МОНИТОРИНГ ВКЛЮЧЕН${NC}"
+    echo ""
+    echo "  ✓ VPN проверяется каждые 5 минут"
+    echo "  ✓ Автоматическое переключение сайтов при блокировке"
+    echo "  ✓ Автоматический перезапуск при сбоях"
+    echo "  ✓ Актуальная ссылка всегда в: /root/vpn-shield/connection.txt"
+    echo ""
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
     echo -e "${BLUE}💾 Файлы сохранены в:${NC} /root/vpn-shield/"
     echo -e "${BLUE}🔧 Управление:${NC}"
-    echo "     systemctl status xray    - статус"
-    echo "     systemctl restart xray   - перезапуск"
-    echo "     journalctl -u xray -f    - логи"
+    echo "     systemctl status xray              - статус VPN"
+    echo "     systemctl restart xray             - перезапуск VPN"
+    echo "     tail -f /var/log/vpn-shield-monitor.log - логи мониторинга"
+    echo "     cat /root/vpn-shield/connection.txt - актуальная ссылка"
     echo ""
-    echo -e "${GREEN}✨ VPN готов к использованию!${NC}"
+    echo -e "${GREEN}✨ VPN работает полностью автоматически!${NC}"
+    echo -e "${GREEN}   Ссылка будет обновляться автоматически при смене маскировки${NC}"
     echo ""
+}
+
+setup_auto_monitor() {
+    print_info "Установка автоматического мониторинга..."
+    
+    # Создаем скрипт мониторинга
+    cat > /usr/local/bin/vpn-monitor.sh <<'MONITOR_EOF'
+#!/bin/bash
+
+XRAY_CONFIG="/usr/local/etc/xray/config.json"
+LOG_FILE="/var/log/vpn-shield-monitor.log"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+test_site() {
+    local site=$1
+    timeout 5 curl -s -o /dev/null -w "%{http_code}" "https://$site" 2>/dev/null | grep -q "200\|301\|302"
+}
+
+check_xray_running() {
+    systemctl is-active --quiet xray
+}
+
+find_working_site() {
+    local sites=(
+        "www.microsoft.com:443|www.microsoft.com,login.microsoft.com"
+        "www.apple.com:443|www.apple.com,www.icloud.com"
+        "www.cloudflare.com:443|www.cloudflare.com,dash.cloudflare.com"
+        "www.amazon.com:443|www.amazon.com,aws.amazon.com"
+        "www.cisco.com:443|www.cisco.com,www.webex.com"
+        "www.zoom.us:443|www.zoom.us,zoom.us"
+        "www.booking.com:443|www.booking.com"
+        "www.speedtest.net:443|www.speedtest.net"
+    )
+    
+    for site_config in "${sites[@]}"; do
+        local domain=$(echo "$site_config" | cut -d'|' -f1 | cut -d':' -f1)
+        if test_site "$domain"; then
+            echo "$site_config"
+            return 0
+        fi
+    done
+    
+    echo "www.cloudflare.com:443|www.cloudflare.com,dash.cloudflare.com"
+}
+
+update_config() {
+    local new_site_config=$1
+    local dest=$(echo "$new_site_config" | cut -d'|' -f1)
+    local sni_list=$(echo "$new_site_config" | cut -d'|' -f2)
+    local sni_primary=$(echo "$sni_list" | cut -d',' -f1)
+    local sni_secondary=$(echo "$sni_list" | cut -d',' -f2)
+    
+    log "Обновление маскировки на: $sni_primary"
+    
+    # Читаем текущий конфиг
+    local uuid=$(grep -oP '"id":\s*"\K[^"]+' "$XRAY_CONFIG" | head -1)
+    local private_key=$(grep -oP '"privateKey":\s*"\K[^"]+' "$XRAY_CONFIG")
+    local short_id=$(grep -oP '"shortIds":\s*\[\s*"\K[^"]+' "$XRAY_CONFIG" | head -1)
+    
+    # Создаем новый конфиг
+    cat > "$XRAY_CONFIG" <<EOF
+{
+  "log": {"loglevel": "warning"},
+  "inbounds": [{
+    "port": 443,
+    "protocol": "vless",
+    "settings": {
+      "clients": [{"id": "$uuid", "flow": "xtls-rprx-vision"}],
+      "decryption": "none"
+    },
+    "streamSettings": {
+      "network": "tcp",
+      "security": "reality",
+      "realitySettings": {
+        "show": false,
+        "dest": "$dest",
+        "xver": 0,
+        "serverNames": ["$sni_primary", "$sni_secondary"],
+        "privateKey": "$private_key",
+        "shortIds": ["$short_id", ""]
+      }
+    }
+  }],
+  "outbounds": [
+    {"protocol": "freedom", "tag": "direct"},
+    {"protocol": "blackhole", "tag": "block"}
+  ]
+}
+EOF
+    
+    systemctl restart xray
+    sleep 3
+    
+    if check_xray_running; then
+        log "✓ Конфигурация обновлена"
+        
+        # Обновляем ссылку
+        local server_ip=$(curl -s ifconfig.me)
+        local info_file="/root/vpn-shield/info.txt"
+        local public_key=$(grep "Public Key:" "$info_file" | awk '{print $3}')
+        
+        local new_link="vless://${uuid}@${server_ip}:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${sni_primary}&fp=chrome&pbk=${public_key}&sid=${short_id}&type=tcp&headerType=none#VPN-Shield"
+        
+        echo "$new_link" > /root/vpn-shield/connection.txt
+        log "✓ Ссылка обновлена: $sni_primary"
+        return 0
+    fi
+    return 1
+}
+
+main() {
+    if ! check_xray_running; then
+        log "⚠ Xray не запущен, перезапуск..."
+        systemctl restart xray
+        sleep 3
+    fi
+    
+    local current_dest=$(grep -oP '"dest":\s*"\K[^"]+' "$XRAY_CONFIG")
+    local current_domain=$(echo "$current_dest" | cut -d':' -f1)
+    
+    if test_site "$current_domain"; then
+        log "✓ Сайт доступен: $current_domain"
+        exit 0
+    fi
+    
+    log "⚠ Сайт недоступен: $current_domain, поиск нового..."
+    local new_site=$(find_working_site)
+    
+    if update_config "$new_site"; then
+        log "✓ VPN восстановлен"
+    else
+        log "✗ Ошибка восстановления"
+    fi
+}
+
+main
+MONITOR_EOF
+    
+    chmod +x /usr/local/bin/vpn-monitor.sh
+    
+    # Создаем systemd service
+    cat > /etc/systemd/system/vpn-shield-monitor.service <<'EOF'
+[Unit]
+Description=VPN Shield Auto Monitor
+After=xray.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/vpn-monitor.sh
+EOF
+    
+    # Создаем systemd timer
+    cat > /etc/systemd/system/vpn-shield-monitor.timer <<'EOF'
+[Unit]
+Description=VPN Shield Monitor Timer
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
+EOF
+    
+    systemctl daemon-reload
+    systemctl enable vpn-shield-monitor.timer > /dev/null 2>&1
+    systemctl start vpn-shield-monitor.timer
+    
+    print_success "Автоматический мониторинг установлен"
 }
 
 main() {
@@ -376,6 +559,7 @@ main() {
     
     save_config
     generate_qr
+    setup_auto_monitor
     show_connection_info
 }
 
