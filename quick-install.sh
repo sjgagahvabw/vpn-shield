@@ -200,14 +200,7 @@ cd "$INSTALL_DIR"
 
 # Клонирование репозитория
 print_info "Клонирование VPN Shield..."
-# ЗАМЕНИТЕ URL НА ВАШ GITHUB РЕПОЗИТОРИЙ!
-REPO_URL="https://github.com/YOUR_USERNAME/vpn-shield.git"
-
-print_warning "ВАЖНО: Отредактируйте скрипт и замените YOUR_USERNAME на ваш GitHub username!"
-read -p "Введите URL вашего GitHub репозитория (или Enter для пропуска): " USER_REPO
-if [ ! -z "$USER_REPO" ]; then
-    REPO_URL="$USER_REPO"
-fi
+REPO_URL="https://github.com/sjgagahvabw/vpn-shield.git"
 
 if git clone "$REPO_URL" . 2>/dev/null; then
     print_success "Репозиторий клонирован"
