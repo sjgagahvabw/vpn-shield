@@ -1,198 +1,389 @@
-# VPN Shield
+# VPN Shield v2.0
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Xray](https://img.shields.io/badge/Xray-1.8+-blue.svg)](https://github.com/XTLS/Xray-core)
+[![Version](https://img.shields.io/badge/version-2.0-green.svg)](https://github.com/sjgagahvabw/vpn-shield/releases)
 
-**VPN Shield** - Advanced VPN solution with automatic site masquerading and intelligent traffic routing. Built with Xray-core REALITY protocol for maximum stealth and performance.
+**VPN Shield v2.0** - Продвинутое VPN решение с автоматической маскировкой и интеллектуальной маршрутизацией. Теперь с **6 протоколами**, **167 российскими сайтами** для маскировки и **автосменой БЕЗ смены ключей**!
 
-## 🌟 Key Features
+## 🎉 Что нового в v2.0
 
-### 🛡️ REALITY Protocol
-- Indistinguishable from regular HTTPS traffic
-- Automatic masquerading under popular websites
-- Bypasses Deep Packet Inspection (DPI)
-- No detectable VPN signatures
+### ✨ Главное улучшение
+**При смене маскировки ключи НЕ меняются!**
+- ✅ Клиенту не нужно обновлять подписку
+- ✅ VPN работает непрерывно
+- ✅ Нет простоев в работе
 
-### 🤖 Fully Automatic
-- **One-command installation** - No configuration needed
-- **Auto site selection** - Finds working masquerade sites automatically
-- **Self-healing** - Monitors and switches sites every 3 minutes
-- **Zero maintenance** - Works completely autonomously
+### 🚀 Новые возможности
 
-### 🎯 Smart Features
-- Automatic connection link generation
-- QR code support for mobile devices
-- Real-time monitoring and auto-recovery
-- Optimized network settings (BBR congestion control)
+1. **6 протоколов** (было 4)
+   - VLESS/REALITY (443) - стелс, маскировка
+   - Hysteria2 (36712/udp) - мобильные сети
+   - Trojan (8444) - надежный
+   - VMess (8443) - классический
+   - **🆕 Shadowsocks 2022 (8388)** - быстрый, современный
+   - **🆕 WireGuard (51820/udp)** - максимальная скорость
 
-### 📱 Universal Client Support
+2. **167 российских сайтов** для маскировки (было 58)
+   - Госпорталы (Госуслуги, Мос.ру)
+   - Банки (Сбербанк, ВТБ, Альфа-Банк)
+   - Крупные компании (Газпром, РЖД, Аэрофлот)
+   - Новостные агентства (ТАСС, РИА, Интерфакс)
+   - E-commerce (Ozon, Wildberries, Avito)
+
+3. **Мониторинг каждые 5 минут** (было 3)
+   - Оптимальный баланс нагрузки и контроля
+   - Автосмена маскировки без смены ключей
+   - Полное автовосстановление всех протоколов
+
+4. **Единая подписка** для всех протоколов
+   - Все 6 протоколов в одном файле
+   - Клиент может выбрать любой
+   - Автообновление при смене маскировки
+
+5. **Работа без веб-панели** (опционально)
+   - Освобождается 1-2 GB RAM
+   - Снижается нагрузка на CPU
+   - Управление через конфигурационные файлы
+
+## 🌟 Ключевые особенности
+
+### 🛡️ Максимальная надежность
+- **6 протоколов** на выбор
+- **Автовосстановление** всех протоколов
+- **167 сайтов** для маскировки
+- **Ключи не меняются** при автосмене
+
+### 🤖 Полная автоматизация
+- **Установка одной командой**
+- **Автовыбор рабочего сайта**
+- **Самовосстановление** каждые 5 минут
+- **Нулевое обслуживание**
+
+### 🎯 Умные функции
+- Приоритет российским сайтам из белого списка
+- Автоматическая генерация подписки
+- QR коды для мобильных устройств
+- Оптимизация сети (BBR)
+
+### 📱 Универсальная поддержка клиентов
 - **iOS**: Shadowrocket, V2Box, Streisand
 - **Android**: v2rayNG, NekoBox, Hiddify
 - **Windows**: v2rayN, Nekoray, Hiddify
 - **macOS**: V2rayU, Qv2ray, Hiddify
 - **Linux**: Qv2ray, Nekoray
 
-## 🚀 Quick Start
+## 🚀 Быстрый старт
 
-### Requirements
+### Требования
 
-- VPS with Debian 11+ or Ubuntu 20.04+
-- Minimum 1GB RAM, 1 CPU core
-- Root access
-- Public IP address
+- VPS с Debian 11+ или Ubuntu 20.04+
+- Минимум 512 MB RAM, 1 CPU
+- Root доступ
+- Публичный IP адрес
 
-### Installation (One Command)
+### Вариант 1: Новая установка (все протоколы)
+
+```bash
+wget -O - https://raw.githubusercontent.com/sjgagahvabw/vpn-shield/main/optimized-install.sh | bash
+```
+
+Скрипт автоматически:
+- ✅ Установит все 6 протоколов
+- ✅ Найдет рабочий сайт маскировки
+- ✅ Сгенерирует безопасные ключи
+- ✅ Настроит firewall
+- ✅ Оптимизирует сеть (BBR)
+- ✅ Установит мониторинг (каждые 5 минут)
+- ✅ **Выдаст готовую подписку**
+
+### Вариант 2: Обновление существующей системы
+
+```bash
+# Скачайте архив с улучшениями
+wget https://github.com/sjgagahvabw/vpn-shield/raw/main/vpn-shield-improvements.tar.gz
+
+# Распакуйте
+tar -xzf vpn-shield-improvements.tar.gz
+cd vpn-shield
+
+# Примените все улучшения одной командой
+bash apply-all-improvements.sh
+```
+
+### Вариант 3: Классическая установка (только VLESS)
 
 ```bash
 wget -O - https://raw.githubusercontent.com/sjgagahvabw/vpn-shield/main/auto-vpn-install.sh | bash
 ```
 
-That's it! The script will:
-- ✅ Install Xray-core automatically
-- ✅ Find working masquerade site
-- ✅ Generate secure keys
-- ✅ Configure firewall
-- ✅ Optimize network (BBR)
-- ✅ Setup auto-monitoring
-- ✅ **Give you ready-to-use connection link**
+## 📖 Что вы получите
 
-### What You Get
-
-After installation completes, you'll see:
+После установки вы увидите:
 
 ```
-📱 CONNECTION LINK:
-vless://uuid@your-ip:443?encryption=none&flow=xtls-rprx-vision...
+╔════════════════════════════════════════════════════════════╗
+║              VPN Shield v2.0 установлен!                  ║
+╚════════════════════════════════════════════════════════════╝
 
-🤖 AUTOMATIC MONITORING ENABLED
-  ✓ VPN checked every 3 minutes
-  ✓ Auto-switches sites if blocked
-  ✓ Auto-restarts on failures
-  ✓ Link always updated in: /root/vpn-shield/connection.txt
+📱 ЕДИНАЯ ПОДПИСКА (все протоколы):
+   /root/vpn-shield/subscription.txt
+
+🛡️ ПРОТОКОЛЫ:
+   ✓ VLESS/REALITY (443) - стелс
+   ✓ Shadowsocks 2022 (8388) - быстрый
+   ✓ VMess (8443) - классический
+   ✓ Trojan (8444) - надежный
+   ✓ Hysteria2 (36712) - мобильные сети
+   ✓ WireGuard (51820) - максимальная скорость
+
+🤖 АВТОМАТИЧЕСКИЙ МОНИТОРИНГ:
+   ✓ Проверка каждые 5 минут
+   ✓ Автосмена маскировки
+   ✓ Ключи НЕ меняются
+   ✓ Подписка обновляется автоматически
 ```
 
-Just copy the link and paste it into your VPN app!
+Просто скопируйте подписку и импортируйте в VPN приложение!
 
-## 📖 How It Works
+## 📊 Сравнение версий
 
-### Automatic Site Masquerading
+| Функция | v1.0 | v2.0 |
+|---------|------|------|
+| Протоколы | 4 | **6** |
+| Сайтов маскировки | 58 | **167** |
+| Интервал проверки | 3 мин | **5 мин** |
+| Смена ключей | Да | **Нет** |
+| Обновление подписки | Требуется | **Не требуется** |
+| Веб-панель | Обязательна | **Опциональна** |
+| Потребление RAM | 2-3 GB | **0.5-1 GB** |
 
-VPN Shield automatically tests and selects from popular sites:
-- Microsoft, Apple, Cloudflare
-- Amazon, Cisco, Oracle
-- Zoom, Booking, Speedtest
-- And more...
+## 🛡️ Протоколы
 
-The system picks the first working site and masks your VPN traffic as regular HTTPS to that site.
+### 1. VLESS/REALITY (порт 443)
+**Для обхода блокировок**
+- Маскируется под HTTPS
+- Невидим для DPI
+- Приоритет российским сайтам
 
-### Self-Healing System
+### 2. Shadowsocks 2022 (порт 8388) 🆕
+**Быстрый и современный**
+- Метод: 2022-blake3-aes-256-gcm
+- Защита от replay-атак
+- Поддержка TCP и UDP
 
-Every 3 minutes, the monitor:
-1. Checks if Xray is running
-2. Tests if current masquerade site is accessible
-3. If blocked → automatically finds new working site
-4. Updates configuration and restarts
-5. Updates connection link automatically
+### 3. VMess (порт 8443)
+**Классический V2Ray**
+- WebSocket + TLS
+- Работает с CDN
+- Широкая поддержка
 
-**You never need to touch the server again!**
+### 4. Trojan (порт 8444)
+**Надежный и простой**
+- TCP + TLS
+- Хорошая производительность
+- Стабильная работа
 
-## 🔧 Management
+### 5. Hysteria2 (порт 36712/udp)
+**Для мобильных сетей**
+- QUIC протокол
+- Отлично работает с UDP
+- Оптимизирован для 4G/5G
 
-### Check Status
+### 6. WireGuard (порт 51820/udp) 🆕
+**Максимальная скорость**
+- Самый быстрый протокол
+- Минимальная задержка
+- Идеально для игр и стриминга
+
+## 🔧 Управление
+
+### Проверка статуса
 ```bash
-systemctl status xray                    # VPN status
-systemctl status vpn-shield-monitor.timer # Monitor status
+# Все протоколы
+systemctl status xray
+systemctl status hysteria-server
+systemctl status wg-quick@wg0
+
+# Мониторинг
+systemctl status vpn-shield-monitor.timer
 ```
 
-### View Logs
+### Просмотр логов
 ```bash
-tail -f /var/log/vpn-shield-monitor.log  # Monitor logs
-journalctl -u xray -f                     # Xray logs
+# Логи мониторинга
+tail -f /var/log/vpn-shield-monitor.log
+
+# Логи протоколов
+journalctl -u xray -f
+journalctl -u hysteria-server -f
 ```
 
-### Get Current Link
+### Получение данных для подключения
 ```bash
-cat /root/vpn-shield/connection.txt      # Always up-to-date link
+# Единая подписка (все протоколы)
+cat /root/vpn-shield/subscription.txt
+
+# Полная информация
+cat /root/vpn-shield/info.txt
+
+# WireGuard конфигурация
+cat /root/vpn-shield/wireguard-client.conf
+
+# WireGuard QR код
+cat /root/vpn-shield/wireguard-qr.txt
 ```
 
-### Manual Site Switch
+### Ручной запуск проверки
 ```bash
-/usr/local/bin/vpn-monitor.sh            # Force check and switch
+/usr/local/bin/vpn-monitor.sh
 ```
 
-## 🏗️ Architecture
+## 🏗️ Архитектура v2.0
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    VPN Shield System                     │
+│                  VPN Shield v2.0 System                  │
 ├─────────────────────────────────────────────────────────┤
 │                                                           │
 │  ┌──────────────┐         ┌──────────────┐             │
-│  │  Xray-core   │◄───────►│   Monitor    │             │
-│  │  (REALITY)   │         │  (Auto-heal) │             │
+│  │   Xray-core  │◄───────►│   Monitor    │             │
+│  │  (4 протокола)│         │  (5 минут)   │             │
 │  └──────┬───────┘         └──────────────┘             │
 │         │                                                │
-│         │ Masquerades as                                │
+│  ┌──────┴───────┐         ┌──────────────┐             │
+│  │  Hysteria2   │         │  WireGuard   │             │
+│  │   (QUIC)     │         │  (fastest)   │             │
+│  └──────────────┘         └──────────────┘             │
+│                                                           │
+│         Маскируется под 167 российских сайтов           │
 │         ▼                                                │
-│  ┌──────────────┐                                       │
-│  │ Popular Site │ (Microsoft, Apple, etc.)             │
-│  │  (HTTPS)     │                                       │
-│  └──────────────┘                                       │
+│  ┌──────────────────────────────────────┐               │
+│  │ Госуслуги, Сбербанк, Газпром, и др.  │               │
+│  └──────────────────────────────────────┘               │
 │                                                           │
 └─────────────────────────────────────────────────────────┘
 ```
 
-## 🔒 Security
+## 🔒 Безопасность
 
-- **X25519 key exchange** - Strong cryptography
-- **TLS 1.3** - Modern encryption
-- **REALITY protocol** - Zero VPN fingerprints
-- **Automatic key generation** - Unique per installation
-- **BBR congestion control** - Optimized performance
+- **X25519** - Современный обмен ключами
+- **TLS 1.3** - Новейшее шифрование
+- **REALITY** - Нулевые VPN сигнатуры
+- **Автогенерация ключей** - Уникальные для каждой установки
+- **BBR** - Оптимизированная производительность
+- **Ключи не меняются** - При автосмене маскировки
 
-## 📊 Performance
+## 📈 Производительность
 
-- **Latency**: Near-native (< 5ms overhead)
-- **Throughput**: Up to 1 Gbps
-- **Concurrent connections**: 1000+
-- **Memory usage**: ~50MB idle
-- **CPU usage**: ~5% idle
+- **Задержка**: Почти нативная (< 5ms)
+- **Пропускная способность**: До 1 Gbps
+- **Одновременные подключения**: 1000+
+- **Использование памяти**: ~50-100MB
+- **Использование CPU**: ~5-10%
 
-## 🛠️ Advanced Configuration
+## 📚 Документация
 
-All configuration is in `/usr/local/etc/xray/config.json`
+### Быстрый старт
+- [README_IMPROVED.md](README_IMPROVED.md) - Краткое описание v2.0
+- [START_DEPLOYMENT.txt](START_DEPLOYMENT.txt) - Быстрое развертывание
 
-To manually change masquerade site:
+### Подробные руководства
+- [SUMMARY.md](SUMMARY.md) - Полный отчет о всех улучшениях
+- [UPGRADE_GUIDE.md](UPGRADE_GUIDE.md) - Руководство по обновлению
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Инструкция по развертыванию
+- [CHECKLIST.txt](CHECKLIST.txt) - Чеклист проверки
+
+### Дополнительные скрипты
+- `add-shadowsocks.sh` - Добавить Shadowsocks 2022
+- `add-wireguard.sh` - Добавить WireGuard
+- `remove-web-panel.sh` - Удалить веб-панель
+- `apply-all-improvements.sh` - Применить все улучшения
+
+## 🎯 Рекомендации по протоколам
+
+### Для обхода блокировок в России
+1. **VLESS/REALITY** - основной (маскируется под HTTPS)
+2. **Shadowsocks 2022** - резервный (быстрый)
+3. **Hysteria2** - для мобильных сетей
+
+### Для максимальной скорости
+1. **WireGuard** - игры, стриминг
+2. **Hysteria2** - UDP трафик
+3. **Shadowsocks 2022** - общее использование
+
+### Для максимальной совместимости
+1. **VMess** - работает везде
+2. **Trojan** - простой и надежный
+3. **VLESS** - современный стандарт
+
+## 🛠️ Расширенная настройка
+
+### Добавление только Shadowsocks
+```bash
+bash add-shadowsocks.sh
+```
+
+### Добавление только WireGuard
+```bash
+bash add-wireguard.sh
+```
+
+### Удаление веб-панели (освобождение RAM)
+```bash
+bash remove-web-panel.sh
+```
+
+### Ручное изменение сайта маскировки
 ```bash
 nano /usr/local/etc/xray/config.json
-# Edit "dest" and "serverNames" fields
+# Измените "dest" и "serverNames"
 systemctl restart xray
 ```
 
-## 🤝 Contributing
+## 🤝 Участие в разработке
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Вклад приветствуется! Пожалуйста, создавайте Pull Request.
 
-## 📄 License
+## 📄 Лицензия
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Проект распространяется под лицензией MIT - см. файл [LICENSE](LICENSE).
 
-## ⚠️ Disclaimer
+## ⚠️ Отказ от ответственности
 
-This software is provided for educational and research purposes. Users are responsible for complying with local laws and regulations.
+Это программное обеспечение предоставляется в образовательных и исследовательских целях. Пользователи несут ответственность за соблюдение местных законов и правил.
 
-## 🙏 Acknowledgments
+## 🙏 Благодарности
 
-- [Xray-core](https://github.com/XTLS/Xray-core) - The core VPN engine
-- [REALITY Protocol](https://github.com/XTLS/REALITY) - Stealth technology
-- All contributors and users
+- [Xray-core](https://github.com/XTLS/Xray-core) - Основной VPN движок
+- [REALITY Protocol](https://github.com/XTLS/REALITY) - Технология стелс
+- [Hysteria2](https://github.com/apernet/hysteria) - QUIC протокол
+- [WireGuard](https://www.wireguard.com/) - Быстрый VPN
+- Всем участникам и пользователям
 
-## 📞 Support
+## 📞 Поддержка
 
-- 📖 [Documentation](https://github.com/sjgagahvabw/vpn-shield/wiki)
-- 🐛 [Issue Tracker](https://github.com/sjgagahvabw/vpn-shield/issues)
-- 💬 [Discussions](https://github.com/sjgagahvabw/vpn-shield/discussions)
+- 📖 [Документация](https://github.com/sjgagahvabw/vpn-shield/wiki)
+- 🐛 [Трекер проблем](https://github.com/sjgagahvabw/vpn-shield/issues)
+- 💬 [Обсуждения](https://github.com/sjgagahvabw/vpn-shield/discussions)
+
+## 📝 Changelog
+
+### v2.0 (2026-05-11)
+- ✅ Добавлены Shadowsocks 2022 и WireGuard
+- ✅ Расширен список до 167 российских сайтов
+- ✅ Ключи НЕ меняются при автосмене
+- ✅ Мониторинг каждые 5 минут
+- ✅ Единая подписка для всех протоколов
+- ✅ Возможность работы без веб-панели
+
+### v1.0 (2024)
+- Первый релиз с 4 протоколами
+- Базовый мониторинг
+- Веб-панель управления
 
 ---
 
-**Made with ❤️ for internet freedom**
+**Сделано с ❤️ для свободы интернета**
+
+**VPN Shield v2.0** - Надежнее. Быстрее. Умнее. 🚀
