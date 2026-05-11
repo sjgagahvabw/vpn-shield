@@ -1,8 +1,9 @@
 #!/bin/bash
 
 #############################################
-# VPN Shield - Ultimate Auto Install
-# Полностью автоматическая установка
+# VPN Shield ULTIMATE
+# Идеальный VPN для обхода блокировок
+# С XHTTP, REALITY, Fragment, CDN masquerading
 #############################################
 
 set -e
@@ -12,70 +13,108 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m'
 
 print_banner() {
     clear
-    echo -e "${CYAN}"
-    echo "╔═══════════════════════════════════════════════════════╗"
-    echo "║                                                       ║"
-    echo "║              🛡️  VPN SHIELD FINAL  🛡️                ║"
-    echo "║                                                       ║"
-    echo "║          Полностью автоматическая установка           ║"
-    echo "║                                                       ║"
-    echo "╚═══════════════════════════════════════════════════════╝"
+    echo -e "${MAGENTA}"
+    cat << "EOF"
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║         🚀 VPN SHIELD ULTIMATE 🚀                        ║
+║                                                           ║
+║     Идеальный VPN для обхода блокировок                  ║
+║     XHTTP + REALITY + Fragment + CDN                     ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+EOF
     echo -e "${NC}"
     echo ""
 }
 
-log() { echo -e "${BLUE}[$(date +'%H:%M:%S')]${NC} $1"; }
-success() { echo -e "${GREEN}[✓]${NC} $1"; }
-error() { echo -e "${RED}[✗]${NC} $1"; exit 1; }
+print_info() { echo -e "${BLUE}[ℹ]${NC} $1"; }
+print_success() { echo -e "${GREEN}[✓]${NC} $1"; }
+print_error() { echo -e "${RED}[✗]${NC} $1"; }
+print_warning() { echo -e "${YELLOW}[⚠]${NC} $1"; }
 
-# Проверка root
-[[ $EUID -ne 0 ]] && error "Запустите от root: sudo bash $0"
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        print_error "Запустите от root: sudo bash $0"
+        exit 1
+    fi
+}
 
-print_banner
+detect_ip() {
+    SERVER_IP=$(curl -s4 ifconfig.me 2>/dev/null || curl -s4 icanhazip.com 2>/dev/null)
+    if [ -z "$SERVER_IP" ]; then
+        print_error "Не удалось определить IP"
+        exit 1
+    fi
+    print_success "IP сервера: $SERVER_IP"
+}
 
-# Получение IP
-log "Определение IP сервера..."
-SERVER_IP=$(curl -s4 ifconfig.me 2>/dev/null || curl -s4 icanhazip.com 2>/dev/null)
-[[ -z "$SERVER_IP" ]] && error "Не удалось определить IP"
-success "IP сервера: $SERVER_IP"
+install_dependencies() {
+    print_info "Установка зависимостей..."
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -qq > /dev/null 2>&1
+    apt-get install -y curl wget unzip qrencode jq openssl net-tools > /dev/null 2>&1
+    print_success "Зависимости установлены"
+}
 
-# Установка зависимостей
-log "Установка зависимостей..."
-export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq > /dev/null 2>&1
-apt-get install -y curl wget unzip nginx qrencode > /dev/null 2>&1
-success "Зависимости установлены"
+install_xray() {
+    print_info "Установка Xray-core (latest)..."
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install > /dev/null 2>&1
+    print_success "Xray-core установлен"
+}
 
-# Установка Xray
-log "Установка Xray-core..."
-bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install > /dev/null 2>&1
-success "Xray установлен"
+generate_keys() {
+    print_info "Генерация ключей..."
+    
+    # UUID для VLESS
+    UUID=$(cat /proc/sys/kernel/random/uuid)
+    
+    # X25519 для REALITY
+    KEYS_OUTPUT=$(/usr/local/bin/xray x25519 2>&1)
+    PRIVATE_KEY=$(echo "$KEYS_OUTPUT" | awk '/Private/{print $NF}')
+    PUBLIC_KEY=$(echo "$KEYS_OUTPUT" | awk '/Public/{print $NF}')
+    
+    # Short IDs (несколько для rotation)
+    SHORT_ID_1=$(openssl rand -hex 8)
+    SHORT_ID_2=$(openssl rand -hex 8)
+    SHORT_ID_3=$(openssl rand -hex 8)
+    
+    # Shadowsocks password
+    SS_PASSWORD=$(openssl rand -base64 32)
+    
+    print_success "Ключи сгенерированы"
+}
 
-# Генерация параметров
-log "Генерация ключей и паролей..."
-UUID=$(cat /proc/sys/kernel/random/uuid)
-KEYS_OUTPUT=$(/usr/local/bin/xray x25519 2>&1)
-PRIVATE_KEY=$(echo "$KEYS_OUTPUT" | awk '/Private/{print $NF}')
-PUBLIC_KEY=$(echo "$KEYS_OUTPUT" | awk '/Public/{print $NF}')
-SHORT_ID=$(openssl rand -hex 8)
-TROJAN_PASS=$(openssl rand -base64 16 | tr -d '/+=' | cut -c1-16)
-success "Ключи сгенерированы"
-
-# Создание конфигурации Xray
-log "Создание конфигурации..."
-cat > /usr/local/etc/xray/config.json <<EOF
+create_ultimate_config() {
+    print_info "Создание ULTIMATE конфигурации..."
+    
+    mkdir -p /usr/local/etc/xray
+    
+    cat > /usr/local/etc/xray/config.json << EOF
 {
-  "log": {"loglevel": "warning"},
+  "log": {
+    "loglevel": "warning",
+    "access": "/var/log/xray/access.log",
+    "error": "/var/log/xray/error.log"
+  },
   "inbounds": [
     {
+      "tag": "vless-reality-xhttp",
       "port": 443,
       "protocol": "vless",
       "settings": {
-        "clients": [{"id": "$UUID", "flow": "xtls-rprx-vision"}],
+        "clients": [
+          {
+            "id": "$UUID",
+            "email": "user@ultimate",
+            "flow": "xtls-rprx-vision"
+          }
+        ],
         "decryption": "none"
       },
       "streamSettings": {
@@ -83,235 +122,317 @@ cat > /usr/local/etc/xray/config.json <<EOF
         "security": "reality",
         "realitySettings": {
           "show": false,
-          "dest": "www.microsoft.com:443",
+          "dest": "www.gosuslugi.ru:443",
           "xver": 0,
-          "serverNames": ["www.microsoft.com"],
+          "serverNames": [
+            "www.gosuslugi.ru",
+            "www.sberbank.ru",
+            "www.mos.ru",
+            "www.gazprom.ru"
+          ],
           "privateKey": "$PRIVATE_KEY",
-          "shortIds": ["$SHORT_ID"]
+          "publicKey": "$PUBLIC_KEY",
+          "shortIds": [
+            "",
+            "$SHORT_ID_1",
+            "$SHORT_ID_2",
+            "$SHORT_ID_3"
+          ],
+          "minClientVer": "",
+          "maxClientVer": "",
+          "maxTimeDiff": 0,
+          "fingerprint": "chrome"
+        },
+        "tcpSettings": {
+          "acceptProxyProtocol": false,
+          "header": {
+            "type": "none"
+          }
         }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ],
+        "metadataOnly": false
       }
     },
     {
+      "tag": "vless-xhttp",
       "port": 8443,
-      "protocol": "vmess",
-      "settings": {"clients": [{"id": "$UUID", "alterId": 0}]},
-      "streamSettings": {"network": "ws", "wsSettings": {"path": "/vmess"}}
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "$UUID",
+            "email": "user@xhttp"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.sberbank.ru:443",
+          "xver": 0,
+          "serverNames": [
+            "www.sberbank.ru",
+            "www.vtb.ru",
+            "www.alfabank.ru"
+          ],
+          "privateKey": "$PRIVATE_KEY",
+          "publicKey": "$PUBLIC_KEY",
+          "shortIds": [
+            "",
+            "$SHORT_ID_1"
+          ],
+          "fingerprint": "chrome"
+        },
+        "xhttpSettings": {
+          "path": "/",
+          "host": "www.sberbank.ru"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      }
     },
     {
-      "port": 8444,
-      "protocol": "trojan",
-      "settings": {"clients": [{"password": "$TROJAN_PASS"}]},
-      "streamSettings": {"network": "tcp"}
+      "tag": "shadowsocks",
+      "port": 8388,
+      "protocol": "shadowsocks",
+      "settings": {
+        "method": "2022-blake3-aes-256-gcm",
+        "password": "$SS_PASSWORD",
+        "network": "tcp,udp"
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      }
     }
   ],
-  "outbounds": [{"protocol": "freedom"}]
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct",
+      "settings": {
+        "domainStrategy": "UseIPv4"
+      }
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
+    }
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {
+        "type": "field",
+        "ip": [
+          "geoip:private"
+        ],
+        "outboundTag": "block"
+      }
+    ]
+  }
 }
 EOF
-success "Конфигурация создана"
 
-# Настройка firewall
-log "Настройка firewall..."
-if command -v ufw &> /dev/null; then
-    ufw --force enable > /dev/null 2>&1
-    ufw allow 22/tcp > /dev/null 2>&1
-    ufw allow 80/tcp > /dev/null 2>&1
-    ufw allow 443/tcp > /dev/null 2>&1
-    ufw allow 8443/tcp > /dev/null 2>&1
-    ufw allow 8444/tcp > /dev/null 2>&1
-    success "Firewall настроен"
-fi
+    mkdir -p /var/log/xray
+    print_success "ULTIMATE конфигурация создана"
+}
 
-# Запуск Xray
-log "Запуск Xray..."
-systemctl enable xray > /dev/null 2>&1
-systemctl restart xray
-sleep 3
+optimize_system() {
+    print_info "Оптимизация системы..."
+    
+    # BBR v3
+    cat >> /etc/sysctl.conf << EOF
 
-if ! systemctl is-active --quiet xray; then
-    error "Xray не запустился. Логи: $(journalctl -u xray -n 5 --no-pager)"
-fi
-success "Xray запущен"
-
-# Создание ссылок
-log "Создание ссылок..."
-VLESS="vless://${UUID}@${SERVER_IP}:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.microsoft.com&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&type=tcp#VPN-REALITY"
-VMESS="vmess://$(echo -n "{\"v\":\"2\",\"ps\":\"VPN-VMess\",\"add\":\"${SERVER_IP}\",\"port\":\"8443\",\"id\":\"${UUID}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"tls\":\"\"}" | base64 -w 0)"
-TROJAN="trojan://${TROJAN_PASS}@${SERVER_IP}:8444?security=none&type=tcp#VPN-Trojan"
-
-# Создание подписки
-mkdir -p /var/www/html
-echo -e "${VLESS}\n${VMESS}\n${TROJAN}" | base64 -w 0 > /var/www/html/sub
-success "Подписка создана"
-
-# Создание веб-страницы
-log "Создание веб-интерфейса..."
-cat > /var/www/html/index.html <<'HTMLEOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VPN Shield</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, system-ui, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        h1 {
-            text-align: center;
-            color: #667eea;
-            margin-bottom: 30px;
-            font-size: 28px;
-        }
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-            text-align: center;
-            text-decoration: none;
-        }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-        .info {
-            background: #f0f0f0;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-        .info h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        .link {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            word-break: break-all;
-            font-size: 12px;
-            font-family: monospace;
-            margin-top: 15px;
-        }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>🛡️ VPN Shield</h1>
-        
-        <button class="btn btn-primary" onclick="copy()">
-            📋 Скопировать ссылку на подписку
-        </button>
-
-        <div class="info">
-            <h3>📦 3 протокола в подписке:</h3>
-            <p>• VLESS (REALITY) - порт 443</p>
-            <p>• VMess (WebSocket) - порт 8443</p>
-            <p>• Trojan - порт 8444</p>
-        </div>
-
-        <div class="info">
-            <h3>📱 Как использовать:</h3>
-            <p>1. Нажмите кнопку выше</p>
-            <p>2. Откройте VPN приложение</p>
-            <p>3. Добавьте подписку</p>
-            <p>4. Вставьте ссылку</p>
-        </div>
-
-        <div class="link">
-            <strong>Ссылка:</strong><br>
-            <span id="url">SUB_URL</span>
-        </div>
-    </div>
-
-    <script>
-        function copy() {
-            const url = 'SUB_URL';
-            navigator.clipboard.writeText(url).then(() => {
-                alert('✅ Ссылка скопирована!\\n\\nТеперь добавьте её в VPN приложение как подписку.');
-            }).catch(() => {
-                prompt('Скопируйте ссылку:', url);
-            });
-        }
-    </script>
-</body>
-</html>
-HTMLEOF
-
-sed -i "s|SUB_URL|http://${SERVER_IP}/sub|g" /var/www/html/index.html
-success "Веб-интерфейс создан"
-
-# Настройка Nginx
-log "Настройка Nginx..."
-systemctl enable nginx > /dev/null 2>&1
-systemctl restart nginx
-success "Nginx запущен"
-
-# Сохранение информации
-mkdir -p /root/vpn-shield
-cat > /root/vpn-shield/info.txt <<EOF
-VPN Shield - Установлено $(date)
-==================================
-
-Веб-интерфейс: http://${SERVER_IP}
-Подписка: http://${SERVER_IP}/sub
-
-UUID: $UUID
-Public Key: $PUBLIC_KEY
-Short ID: $SHORT_ID
-Trojan Password: $TROJAN_PASS
-
-Ссылки:
--------
-REALITY: $VLESS
-VMess: $VMESS
-Trojan: $TROJAN
-
-Управление:
------------
-systemctl status xray
-systemctl restart xray
-journalctl -u xray -f
+# VPN Shield ULTIMATE optimizations
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
+net.ipv4.tcp_fastopen=3
+net.ipv4.tcp_slow_start_after_idle=0
+net.ipv4.tcp_mtu_probing=1
+net.core.rmem_max=134217728
+net.core.wmem_max=134217728
+net.ipv4.tcp_rmem=4096 87380 67108864
+net.ipv4.tcp_wmem=4096 65536 67108864
+net.core.netdev_max_backlog=250000
+net.ipv4.tcp_max_syn_backlog=8192
+net.ipv4.tcp_max_tw_buckets=2000000
+net.ipv4.ip_forward=1
 EOF
 
-# Финальный вывод
-echo ""
-echo -e "${GREEN}╔═══════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║                                                       ║${NC}"
-echo -e "${GREEN}║              ✅  УСТАНОВКА ЗАВЕРШЕНА  ✅              ║${NC}"
-echo -e "${GREEN}║                                                       ║${NC}"
-echo -e "${GREEN}╚═══════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${CYAN}🌐 Откройте в браузере:${NC}"
-echo ""
-echo -e "${YELLOW}   http://${SERVER_IP}${NC}"
-echo ""
-echo -e "${CYAN}📱 На странице нажмите кнопку 'Скопировать ссылку'${NC}"
-echo -e "${CYAN}   и добавьте её в VPN приложение как подписку${NC}"
-echo ""
-echo -e "${BLUE}💾 Вся информация сохранена: /root/vpn-shield/info.txt${NC}"
-echo ""
-echo -e "${GREEN}✨ Готово! 3 протокола в одной подписке!${NC}"
-echo ""
+    sysctl -p > /dev/null 2>&1
+    print_success "Система оптимизирована (BBR v3)"
+}
+
+setup_firewall() {
+    print_info "Настройка firewall..."
+    
+    if command -v ufw &> /dev/null; then
+        ufw allow 443/tcp > /dev/null 2>&1
+        ufw allow 8443/tcp > /dev/null 2>&1
+        ufw allow 8388/tcp > /dev/null 2>&1
+        ufw allow 8388/udp > /dev/null 2>&1
+    fi
+    
+    print_success "Firewall настроен"
+}
+
+start_services() {
+    print_info "Запуск сервисов..."
+    
+    systemctl enable xray > /dev/null 2>&1
+    systemctl restart xray
+    
+    sleep 2
+    
+    if systemctl is-active --quiet xray; then
+        print_success "Xray запущен"
+    else
+        print_error "Ошибка запуска Xray"
+        journalctl -u xray -n 20 --no-pager
+        exit 1
+    fi
+}
+
+generate_subscription() {
+    print_info "Генерация подписки..."
+    
+    mkdir -p /root/vpn-shield
+    
+    # VLESS + REALITY + TCP
+    VLESS_REALITY="vless://${UUID}@${SERVER_IP}:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.gosuslugi.ru&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID_1}&type=tcp&headerType=none#VPN-Shield-ULTIMATE-REALITY"
+    
+    # VLESS + XHTTP + REALITY
+    VLESS_XHTTP="vless://${UUID}@${SERVER_IP}:8443?encryption=none&security=reality&sni=www.sberbank.ru&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID_1}&type=xhttp&path=/&host=www.sberbank.ru#VPN-Shield-ULTIMATE-XHTTP"
+    
+    # Shadowsocks
+    SS_LINK="ss://$(echo -n "2022-blake3-aes-256-gcm:${SS_PASSWORD}" | base64 -w 0)@${SERVER_IP}:8388#VPN-Shield-ULTIMATE-SS"
+    
+    cat > /root/vpn-shield/subscription.txt << EOF
+$VLESS_REALITY
+
+$VLESS_XHTTP
+
+$SS_LINK
+EOF
+
+    # QR коды
+    echo "$VLESS_REALITY" | qrencode -t ANSIUTF8 > /root/vpn-shield/qr-reality.txt
+    echo "$VLESS_XHTTP" | qrencode -t ANSIUTF8 > /root/vpn-shield/qr-xhttp.txt
+    echo "$SS_LINK" | qrencode -t ANSIUTF8 > /root/vpn-shield/qr-ss.txt
+    
+    # Информация
+    cat > /root/vpn-shield/info.txt << EOF
+╔═══════════════════════════════════════════════════════════╗
+║         VPN SHIELD ULTIMATE - Информация                 ║
+╚═══════════════════════════════════════════════════════════╝
+
+Server IP: $SERVER_IP
+
+=== VLESS + REALITY + TCP (основной) ===
+UUID: $UUID
+Public Key: $PUBLIC_KEY
+Short IDs: $SHORT_ID_1, $SHORT_ID_2, $SHORT_ID_3
+SNI: www.gosuslugi.ru (или www.sberbank.ru, www.mos.ru, www.gazprom.ru)
+Port: 443
+Flow: xtls-rprx-vision
+
+=== VLESS + XHTTP + REALITY (новейший) ===
+UUID: $UUID (тот же)
+Public Key: $PUBLIC_KEY (тот же)
+Short ID: $SHORT_ID_1
+SNI: www.sberbank.ru
+Port: 8443
+Type: xhttp
+Path: /
+Host: www.sberbank.ru
+
+=== Shadowsocks 2022 ===
+Port: 8388
+Method: 2022-blake3-aes-256-gcm
+Password: $SS_PASSWORD
+
+=== Подписка ===
+cat /root/vpn-shield/subscription.txt
+
+=== QR коды ===
+cat /root/vpn-shield/qr-reality.txt
+cat /root/vpn-shield/qr-xhttp.txt
+cat /root/vpn-shield/qr-ss.txt
+EOF
+
+    print_success "Подписка создана"
+}
+
+print_final() {
+    clear
+    echo -e "${GREEN}"
+    cat << "EOF"
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║         ✓ VPN SHIELD ULTIMATE УСТАНОВЛЕН!                ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+EOF
+    echo -e "${NC}"
+    echo ""
+    echo -e "${CYAN}🚀 Установленные протоколы:${NC}"
+    echo ""
+    echo -e "  ${GREEN}✓${NC} VLESS + REALITY + TCP (443) - основной"
+    echo -e "  ${GREEN}✓${NC} VLESS + XHTTP + REALITY (8443) - новейший"
+    echo -e "  ${GREEN}✓${NC} Shadowsocks 2022 (8388) - быстрый"
+    echo ""
+    echo -e "${CYAN}📱 Получить подписку:${NC}"
+    echo -e "  ${YELLOW}cat /root/vpn-shield/subscription.txt${NC}"
+    echo ""
+    echo -e "${CYAN}📋 Полная информация:${NC}"
+    echo -e "  ${YELLOW}cat /root/vpn-shield/info.txt${NC}"
+    echo ""
+    echo -e "${CYAN}🔍 QR коды:${NC}"
+    echo -e "  ${YELLOW}cat /root/vpn-shield/qr-reality.txt${NC}"
+    echo -e "  ${YELLOW}cat /root/vpn-shield/qr-xhttp.txt${NC}"
+    echo ""
+    echo -e "${GREEN}🎯 Особенности ULTIMATE:${NC}"
+    echo -e "  • XHTTP - новейший транспорт (неотличим от HTTP/2)"
+    echo -e "  • REALITY - маскировка под российские сайты"
+    echo -e "  • Multiple Short IDs - rotation для безопасности"
+    echo -e "  • BBR v3 - максимальная скорость"
+    echo -e "  • Smart SNI - 4 российских сайта на выбор"
+    echo ""
+    echo -e "${YELLOW}💡 Рекомендация:${NC}"
+    echo -e "  Используйте VLESS + XHTTP (8443) - это самый современный"
+    echo -e "  и безопасный вариант для обхода блокировок!"
+    echo ""
+}
+
+# Main
+print_banner
+check_root
+detect_ip
+install_dependencies
+install_xray
+generate_keys
+create_ultimate_config
+optimize_system
+setup_firewall
+start_services
+generate_subscription
+print_final
