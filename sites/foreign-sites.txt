@@ -1,0 +1,20 @@
+# Зарубежные сайты для маскировки (запасной вариант)
+
+# Tech Giants
+www.microsoft.com:443
+www.apple.com:443
+www.cloudflare.com:443
+www.amazon.com:443
+www.cisco.com:443
+www.oracle.com:443
+www.ibm.com:443
+www.samsung.com:443
+
+# Popular Services
+www.zoom.us:443
+www.booking.com:443
+www.speedtest.net:443
+www.ubuntu.com:443
+www.debian.org:443
+www.nginx.com:443
+www.docker.com:443

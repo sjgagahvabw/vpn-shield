@@ -1,0 +1,58 @@
+# Российские сайты из белого списка РКН
+# Эти сайты не блокируются и идеальны для маскировки VPN трафика
+
+# Государственные порталы
+www.gosuslugi.ru:443
+www.mos.ru:443
+www.gov.ru:443
+www.kremlin.ru:443
+
+# Банки (топ-10)
+www.sberbank.ru:443
+www.vtb.ru:443
+www.alfabank.ru:443
+www.tinkoff.ru:443
+www.gazprombank.ru:443
+www.raiffeisen.ru:443
+www.rosbank.ru:443
+www.open.ru:443
+
+# Крупные компании
+www.gazprom.ru:443
+www.rosneft.ru:443
+www.rzd.ru:443
+www.aeroflot.ru:443
+www.mos-gortrans.ru:443
+www.mosmetro.ru:443
+
+# Новостные агентства
+www.tass.ru:443
+www.ria.ru:443
+www.interfax.ru:443
+www.rt.com:443
+www.rbc.ru:443
+www.kommersant.ru:443
+www.vedomosti.ru:443
+
+# Популярные сервисы
+www.yandex.ru:443
+www.mail.ru:443
+www.vk.com:443
+www.ok.ru:443
+www.avito.ru:443
+www.ozon.ru:443
+www.wildberries.ru:443
+www.lamoda.ru:443
+
+# Образование
+www.edu.ru:443
+www.msu.ru:443
+www.spbu.ru:443
+www.hse.ru:443
+
+# Телеком
+www.mts.ru:443
+www.megafon.ru:443
+www.beeline.ru:443
+www.tele2.ru:443
+www.rostelecom.ru:443

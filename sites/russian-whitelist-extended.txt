@@ -1,0 +1,203 @@
+# Расширенный список российских сайтов из белого списка РКН
+# Эти сайты не блокируются и идеальны для маскировки VPN трафика
+
+# Государственные порталы и органы власти
+www.gosuslugi.ru:443
+www.mos.ru:443
+www.gov.ru:443
+www.kremlin.ru:443
+www.duma.gov.ru:443
+www.council.gov.ru:443
+www.government.ru:443
+www.pfr.gov.ru:443
+www.nalog.gov.ru:443
+www.fss.ru:443
+www.rosreestr.ru:443
+www.gibdd.ru:443
+www.mvd.ru:443
+www.mil.ru:443
+www.mchs.gov.ru:443
+
+# Банки (топ-20)
+www.sberbank.ru:443
+www.vtb.ru:443
+www.alfabank.ru:443
+www.tinkoff.ru:443
+www.gazprombank.ru:443
+www.raiffeisen.ru:443
+www.rosbank.ru:443
+www.open.ru:443
+www.rshb.ru:443
+www.sovcombank.ru:443
+www.psbank.ru:443
+www.uralsib.ru:443
+www.akbars.ru:443
+www.unicredit.ru:443
+www.citibank.ru:443
+www.homecredit.ru:443
+www.mkb.ru:443
+www.metallinvestbank.ru:443
+www.zenit.ru:443
+www.bspb.ru:443
+
+# Крупные компании и корпорации
+www.gazprom.ru:443
+www.rosneft.ru:443
+www.lukoil.ru:443
+www.tatneft.ru:443
+www.surgutneftegas.ru:443
+www.rzd.ru:443
+www.aeroflot.ru:443
+www.s7.ru:443
+www.pobeda.aero:443
+www.utair.ru:443
+www.mos-gortrans.ru:443
+www.mosmetro.ru:443
+www.rosseti.ru:443
+www.rushydro.ru:443
+www.rosatom.ru:443
+www.rostelecom.ru:443
+www.rusal.ru:443
+www.nlmk.ru:443
+www.severstal.com:443
+www.evraz.com:443
+
+# Новостные агентства и СМИ
+www.tass.ru:443
+www.ria.ru:443
+www.interfax.ru:443
+www.rt.com:443
+www.rbc.ru:443
+www.kommersant.ru:443
+www.vedomosti.ru:443
+www.izvestia.ru:443
+www.rg.ru:443
+www.gazeta.ru:443
+www.lenta.ru:443
+www.itar-tass.com:443
+www.1tv.ru:443
+www.vesti.ru:443
+www.ntv.ru:443
+www.tvzvezda.ru:443
+www.ren.tv:443
+
+# Популярные сервисы и соцсети
+www.yandex.ru:443
+www.mail.ru:443
+www.vk.com:443
+www.ok.ru:443
+www.rambler.ru:443
+www.livejournal.com:443
+www.pikabu.ru:443
+www.habr.com:443
+www.vc.ru:443
+
+# E-commerce и маркетплейсы
+www.avito.ru:443
+www.ozon.ru:443
+www.wildberries.ru:443
+www.lamoda.ru:443
+www.citilink.ru:443
+www.mvideo.ru:443
+www.eldorado.ru:443
+www.dns-shop.ru:443
+www.technopark.ru:443
+www.svyaznoy.ru:443
+www.aliexpress.ru:443
+www.goods.ru:443
+www.sbermegamarket.ru:443
+www.yandex.market.ru:443
+
+# Образование и наука
+www.edu.ru:443
+www.msu.ru:443
+www.spbu.ru:443
+www.hse.ru:443
+www.mipt.ru:443
+www.msu.edu.ru:443
+www.nsu.ru:443
+www.urfu.ru:443
+www.kpfu.ru:443
+www.sfu-kras.ru:443
+www.tsu.ru:443
+www.unn.ru:443
+www.rsuh.ru:443
+www.mgimo.ru:443
+www.rea.ru:443
+
+# Телеком операторы
+www.mts.ru:443
+www.megafon.ru:443
+www.beeline.ru:443
+www.tele2.ru:443
+www.rostelecom.ru:443
+www.yota.ru:443
+www.rt.ru:443
+
+# Финансовые сервисы
+www.cbr.ru:443
+www.moex.com:443
+www.rts.ru:443
+www.nspk.ru:443
+www.qiwi.com:443
+www.webmoney.ru:443
+www.yandex.money.ru:443
+
+# Медицина и здравоохранение
+www.rosminzdrav.ru:443
+www.niioz.ru:443
+www.medportal.ru:443
+www.docdoc.ru:443
+www.prodoctorov.ru:443
+
+# Культура и развлечения
+www.culture.ru:443
+www.tretyakovgallery.ru:443
+www.hermitagemuseum.org:443
+www.pushkinmuseum.art:443
+www.bolshoi.ru:443
+www.mariinsky.ru:443
+www.kinopoisk.ru:443
+www.ivi.ru:443
+www.okko.tv:443
+www.more.tv:443
+www.premier.one:443
+
+# Спорт
+www.minsport.gov.ru:443
+www.olympic.ru:443
+www.rfs.ru:443
+www.fhr.ru:443
+www.rusbiathlon.ru:443
+www.sports.ru:443
+www.championat.com:443
+
+# Туризм и путешествия
+www.russiatourism.ru:443
+www.tutu.ru:443
+www.onetwotrip.com:443
+www.biletix.ru:443
+www.kassir.ru:443
+
+# Недвижимость
+www.cian.ru:443
+www.domclick.ru:443
+www.etagi.com:443
+www.move.ru:443
+
+# Работа и карьера
+www.hh.ru:443
+www.superjob.ru:443
+www.rabota.ru:443
+www.zarplata.ru:443
+
+# Автомобили
+www.auto.ru:443
+www.drom.ru:443
+www.avito.ru:443
+www.cars.ru:443
+
+# Погода и карты
+www.gismeteo.ru:443
+www.yandex.ru:443
+www.2gis.ru:443

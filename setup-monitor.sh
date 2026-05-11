@@ -39,9 +39,9 @@ Description=VPN Shield Auto Monitor Timer
 Requires=vpn-shield-monitor.service
 
 [Timer]
-OnBootSec=2min
+OnBootSec=1min
 OnUnitActiveSec=5min
-AccuracySec=1min
+AccuracySec=30s
 
 [Install]
 WantedBy=timers.target

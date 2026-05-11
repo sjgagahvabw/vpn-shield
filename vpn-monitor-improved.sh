@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #############################################
-# VPN Shield - Multi-Protocol Auto Monitor
-# Автоматический мониторинг всех протоколов
-# с автосменой данных при падении
+# VPN Shield - Улучшенный мониторинг
+# Автосмена маскировки БЕЗ смены ключей
+# Проверка каждые 5 минут
 #############################################
 
 set -e
@@ -79,9 +79,10 @@ get_vless_data() {
     local sni=$(jq -r '.inbounds[0].streamSettings.realitySettings.serverNames[0] // empty' "$XRAY_CONFIG" 2>/dev/null)
     local dest=$(jq -r '.inbounds[0].streamSettings.realitySettings.dest // empty' "$XRAY_CONFIG" 2>/dev/null)
     local public_key=$(jq -r '.inbounds[0].streamSettings.realitySettings.publicKey // empty' "$XRAY_CONFIG" 2>/dev/null)
+    local private_key=$(jq -r '.inbounds[0].streamSettings.realitySettings.privateKey // empty' "$XRAY_CONFIG" 2>/dev/null)
     local short_id=$(jq -r '.inbounds[0].streamSettings.realitySettings.shortIds[1] // empty' "$XRAY_CONFIG" 2>/dev/null)
     
-    echo "$uuid|$sni|$dest|$public_key|$short_id"
+    echo "$uuid|$sni|$dest|$public_key|$private_key|$short_id"
 }
 
 # Проверка работы VLESS/REALITY
@@ -109,29 +110,37 @@ check_vless() {
     fi
 }
 
-# Обновление конфигурации VLESS
+# Обновление конфигурации VLESS (ТОЛЬКО маскировка, ключи НЕ меняем!)
 update_vless_config() {
     local new_site=$1
     local dest="$new_site"
     local domain=$(echo "$new_site" | cut -d':' -f1)
     
-    log "Обновление VLESS: маскировка под $domain"
+    log "Обновление VLESS: маскировка под $domain (ключи сохраняются)"
     
-    # Генерируем новые ключи
-    local keys_output=$(/usr/local/bin/xray x25519 2>&1)
-    local private_key=$(echo "$keys_output" | grep -oP 'Private key: \K[A-Za-z0-9_-]+' || echo "$keys_output" | awk '/Private/{print $NF}')
-    local public_key=$(echo "$keys_output" | grep -oP 'Public key: \K[A-Za-z0-9_-]+' || echo "$keys_output" | awk '/Public/{print $NF}')
+    # Получаем текущие ключи
+    local data=$(get_vless_data)
+    local current_private_key=$(echo "$data" | cut -d'|' -f5)
+    local current_public_key=$(echo "$data" | cut -d'|' -f4)
     
-    if [ -z "$private_key" ] || [ -z "$public_key" ]; then
-        log "✗ VLESS: Ошибка генерации ключей"
-        return 1
+    # Если ключей нет - генерируем новые
+    if [ -z "$current_private_key" ] || [ -z "$current_public_key" ]; then
+        log "Генерация новых ключей (первый запуск)..."
+        local keys_output=$(/usr/local/bin/xray x25519 2>&1)
+        current_private_key=$(echo "$keys_output" | grep -oP 'Private key: \K[A-Za-z0-9_-]+' || echo "$keys_output" | awk '/Private/{print $NF}')
+        current_public_key=$(echo "$keys_output" | grep -oP 'Public key: \K[A-Za-z0-9_-]+' || echo "$keys_output" | awk '/Public/{print $NF}')
+        
+        if [ -z "$current_private_key" ] || [ -z "$current_public_key" ]; then
+            log "✗ VLESS: Ошибка генерации ключей"
+            return 1
+        fi
     fi
     
-    # Обновляем конфиг
+    # Обновляем ТОЛЬКО dest и serverNames, ключи оставляем прежними
     jq --arg dest "$dest" \
        --arg sni "$domain" \
-       --arg privkey "$private_key" \
-       --arg pubkey "$public_key" \
+       --arg privkey "$current_private_key" \
+       --arg pubkey "$current_public_key" \
        '.inbounds[0].streamSettings.realitySettings.dest = $dest |
         .inbounds[0].streamSettings.realitySettings.serverNames = [$sni] |
         .inbounds[0].streamSettings.realitySettings.privateKey = $privkey |
@@ -144,12 +153,12 @@ update_vless_config() {
         sleep 3
         
         if systemctl is-active --quiet xray; then
-            log "✓ VLESS: Конфигурация обновлена успешно"
+            log "✓ VLESS: Маскировка обновлена успешно (ключи не изменились)"
             
             # Обновляем info.txt
             if [ -f "$INFO_FILE" ]; then
                 sed -i "s|^SNI:.*|SNI: $domain|" "$INFO_FILE"
-                sed -i "s|^Public Key:.*|Public Key: $public_key|" "$INFO_FILE"
+                sed -i "s|^Masquerade:.*|Masquerade: $domain|" "$INFO_FILE"
             fi
             
             return 0
@@ -186,29 +195,25 @@ check_hysteria() {
     fi
 }
 
-# Обновление конфигурации Hysteria2
+# Обновление конфигурации Hysteria2 (ТОЛЬКО маскировка, пароль НЕ меняем!)
 update_hysteria_config() {
     local new_site=$1
     local domain=$(echo "$new_site" | cut -d':' -f1)
     
-    log "Обновление Hysteria2: маскировка под $domain"
+    log "Обновление Hysteria2: маскировка под $domain (пароль сохраняется)"
     
-    # Генерируем новый пароль
-    local new_password=$(openssl rand -base64 32)
-    
-    # Обновляем конфиг
-    sed -i "s|password:.*|password: $new_password|" "$HYSTERIA_CONFIG"
+    # Обновляем ТОЛЬКО URL маскировки
     sed -i "s|url:.*|url: https://$domain|" "$HYSTERIA_CONFIG"
     
     systemctl restart hysteria-server
     sleep 2
     
     if systemctl is-active --quiet hysteria-server; then
-        log "✓ Hysteria2: Конфигурация обновлена"
+        log "✓ Hysteria2: Маскировка обновлена (пароль не изменился)"
         
         # Обновляем info.txt
         if [ -f "$INFO_FILE" ]; then
-            sed -i "s|^Hysteria2 Password:.*|Hysteria2 Password: $new_password|" "$INFO_FILE"
+            sed -i "s|^Hysteria2 Masquerade:.*|Hysteria2 Masquerade: $domain|" "$INFO_FILE"
         fi
         
         return 0
@@ -234,39 +239,20 @@ check_trojan() {
     fi
 }
 
-# Обновление конфигурации Trojan
-update_trojan_config() {
-    log "Обновление Trojan: генерация нового пароля"
+# Восстановление Trojan (перезапуск Xray)
+restore_trojan() {
+    log "Восстановление Trojan: перезапуск Xray"
     
-    # Генерируем новый пароль
-    local new_password=$(openssl rand -hex 16)
+    systemctl restart xray
+    sleep 2
     
-    # Обновляем конфиг
-    local client_config=$(jq -n --arg pass "$new_password" '{password: $pass}')
-    jq --argjson client "$client_config" \
-       '.inbounds[2].settings.clients = [$client]' \
-       "$XRAY_CONFIG" > "${XRAY_CONFIG}.tmp"
-    
-    if [ $? -eq 0 ]; then
-        mv "${XRAY_CONFIG}.tmp" "$XRAY_CONFIG"
-        systemctl restart xray
-        sleep 2
-        
-        if systemctl is-active --quiet xray; then
-            log "✓ Trojan: Конфигурация обновлена"
-            
-            # Обновляем info.txt
-            if [ -f "$INFO_FILE" ]; then
-                sed -i "s|^Trojan Password:.*|Trojan Password: $new_password|" "$INFO_FILE"
-            fi
-            
-            return 0
-        fi
+    if systemctl is-active --quiet xray && ss -tuln | grep -q ":8444 "; then
+        log "✓ Trojan: Восстановлен"
+        return 0
+    else
+        log "✗ Trojan: Ошибка восстановления"
+        return 1
     fi
-    
-    log "✗ Trojan: Ошибка обновления"
-    rm -f "${XRAY_CONFIG}.tmp"
-    return 1
 }
 
 # Проверка работы VMess
@@ -285,39 +271,20 @@ check_vmess() {
     fi
 }
 
-# Обновление конфигурации VMess
-update_vmess_config() {
-    log "Обновление VMess: генерация нового UUID"
+# Восстановление VMess (перезапуск Xray)
+restore_vmess() {
+    log "Восстановление VMess: перезапуск Xray"
     
-    # Генерируем новый UUID
-    local new_uuid=$(cat /proc/sys/kernel/random/uuid)
+    systemctl restart xray
+    sleep 2
     
-    # Обновляем конфиг
-    local client_config=$(jq -n --arg uuid "$new_uuid" '{id: $uuid, alterId: 0}')
-    jq --argjson client "$client_config" \
-       '.inbounds[1].settings.clients = [$client]' \
-       "$XRAY_CONFIG" > "${XRAY_CONFIG}.tmp"
-    
-    if [ $? -eq 0 ]; then
-        mv "${XRAY_CONFIG}.tmp" "$XRAY_CONFIG"
-        systemctl restart xray
-        sleep 2
-        
-        if systemctl is-active --quiet xray; then
-            log "✓ VMess: Конфигурация обновлена"
-            
-            # Обновляем info.txt
-            if [ -f "$INFO_FILE" ]; then
-                sed -i "s|^VMess UUID:.*|VMess UUID: $new_uuid|" "$INFO_FILE"
-            fi
-            
-            return 0
-        fi
+    if systemctl is-active --quiet xray && ss -tuln | grep -q ":8443 "; then
+        log "✓ VMess: Восстановлен"
+        return 0
+    else
+        log "✗ VMess: Ошибка восстановления"
+        return 1
     fi
-    
-    log "✗ VMess: Ошибка обновления"
-    rm -f "${XRAY_CONFIG}.tmp"
-    return 1
 }
 
 # Генерация единой подписки
@@ -439,7 +406,7 @@ main() {
         all_dead=false
     else
         log "Попытка восстановления Trojan..."
-        if update_trojan_config; then
+        if restore_trojan; then
             trojan_ok=true
             all_dead=false
         fi
@@ -451,24 +418,24 @@ main() {
         all_dead=false
     else
         log "Попытка восстановления VMess..."
-        if update_vmess_config; then
+        if restore_vmess; then
             vmess_ok=true
             all_dead=false
         fi
     fi
     
-    # Если все протоколы мертвы - обновляем всё
+    # Если все протоколы мертвы - обновляем маскировку
     if [ "$all_dead" = true ]; then
-        log "⚠⚠⚠ ВСЕ ПРОТОКОЛЫ НЕДОСТУПНЫ! Полное обновление..."
+        log "⚠⚠⚠ ВСЕ ПРОТОКОЛЫ НЕДОСТУПНЫ! Обновление маскировки..."
         
         local new_site=$(find_working_site true)
         
         update_vless_config "$new_site"
         update_hysteria_config "$new_site"
-        update_trojan_config
-        update_vmess_config
+        restore_trojan
+        restore_vmess
         
-        log "✓ Полное обновление завершено"
+        log "✓ Обновление завершено"
     fi
     
     # Генерируем подписку
