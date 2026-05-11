@@ -1,0 +1,106 @@
+═══════════════════════════════════════════════════════════
+GitHub Repository Description
+═══════════════════════════════════════════════════════════
+
+SHORT DESCRIPTION (для GitHub About):
+─────────────────────────────────────
+VPN Shield v2.0 - Advanced VPN with 6 protocols, 167 Russian sites masquerading, auto-switching WITHOUT key changes. VLESS/REALITY, Shadowsocks 2022, WireGuard, Hysteria2, Trojan, VMess.
+
+TOPICS (для GitHub Topics):
+─────────────────────────────────────
+vpn
+xray
+reality
+shadowsocks
+wireguard
+hysteria
+vless
+vmess
+trojan
+censorship-circumvention
+russia
+privacy
+security
+self-hosted
+automation
+monitoring
+
+WEBSITE (для GitHub Website):
+─────────────────────────────────────
+https://github.com/sjgagahvabw/vpn-shield
+
+═══════════════════════════════════════════════════════════
+
+DETAILED DESCRIPTION (для GitHub README):
+─────────────────────────────────────
+
+🚀 VPN Shield v2.0 - Продвинутое VPN решение нового поколения
+
+✨ ГЛАВНАЯ ФИШКА:
+При смене маскировки ключи НЕ меняются!
+→ Клиенту не нужно обновлять подписку
+→ VPN работает непрерывно без простоев
+
+🛡️ 6 ПРОТОКОЛОВ:
+• VLESS/REALITY - стелс, маскировка под HTTPS
+• Shadowsocks 2022 - быстрый, современный
+• WireGuard - максимальная скорость
+• Hysteria2 - для мобильных сетей
+• Trojan - надежный
+• VMess - классический
+
+🌐 167 РОССИЙСКИХ САЙТОВ для маскировки:
+• Госпорталы (Госуслуги, Мос.ру)
+• Банки (Сбербанк, ВТБ, Альфа-Банк)
+• Компании (Газпром, РЖД, Аэрофлот)
+• E-commerce (Ozon, Wildberries, Avito)
+
+🤖 ПОЛНАЯ АВТОМАТИЗАЦИЯ:
+• Установка одной командой
+• Автовыбор рабочего сайта
+• Мониторинг каждые 5 минут
+• Автовосстановление всех протоколов
+• Нулевое обслуживание
+
+📱 ЕДИНАЯ ПОДПИСКА для всех протоколов
+Импортируйте один раз - используйте все 6 протоколов!
+
+🚀 БЫСТРЫЙ СТАРТ:
+wget -O - https://raw.githubusercontent.com/sjgagahvabw/vpn-shield/main/optimized-install.sh | bash
+
+📚 Полная документация в README.md
+
+═══════════════════════════════════════════════════════════
+
+SOCIAL MEDIA POST:
+─────────────────────────────────────
+
+🎉 VPN Shield v2.0 - Революция в обходе блокировок!
+
+✨ Главная фишка: ключи НЕ меняются при автосмене маскировки!
+Это значит VPN работает непрерывно, без необходимости обновлять подписку.
+
+🛡️ 6 протоколов на выбор:
+• VLESS/REALITY - невидим для DPI
+• Shadowsocks 2022 - быстрый и современный
+• WireGuard - максимальная скорость
+• Hysteria2 - для мобильных сетей
+• Trojan + VMess - классика
+
+🌐 167 российских сайтов для маскировки
+Приоритет госпорталам, банкам и крупным компаниям
+
+🤖 Полная автоматизация
+Установка одной командой, мониторинг каждые 5 минут
+
+📱 Единая подписка для всех протоколов
+Импортируй один раз - используй все!
+
+🚀 Установка:
+wget -O - https://raw.githubusercontent.com/sjgagahvabw/vpn-shield/main/optimized-install.sh | bash
+
+GitHub: https://github.com/sjgagahvabw/vpn-shield
+
+#VPN #Privacy #Security #Russia #Censorship #OpenSource
+
+═══════════════════════════════════════════════════════════
