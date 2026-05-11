@@ -1,10 +1,28 @@
-# VPN Shield v2.0
+# VPN Shield ULTIMATE 🚀
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Xray](https://img.shields.io/badge/Xray-1.8+-blue.svg)](https://github.com/XTLS/Xray-core)
-[![Version](https://img.shields.io/badge/version-2.0-green.svg)](https://github.com/sjgagahvabw/vpn-shield/releases)
+[![Version](https://img.shields.io/badge/version-ULTIMATE-red.svg)](https://github.com/sjgagahvabw/vpn-shield/releases)
 
-**VPN Shield v2.0** - Продвинутое VPN решение с автоматической маскировкой и интеллектуальной маршрутизацией. Теперь с **6 протоколами**, **167 российскими сайтами** для маскировки и **автосменой БЕЗ смены ключей**!
+**VPN Shield ULTIMATE** - Идеальное VPN решение для обхода блокировок. С **XHTTP** (новейший HTTP/2 транспорт), **REALITY**, **Smart SNI rotation** и **автосменой БЕЗ смены ключей**!
+
+## 🔥 ULTIMATE - Что нового?
+
+### XHTTP - Новейший транспорт
+- Полная совместимость с HTTP/2
+- Неотличим от обычного веб-трафика
+- Multiplexing и Server Push
+- Работает даже при глубокой инспекции
+
+### Smart SNI Rotation
+- 4 российских сайта на выбор
+- Автоматическая ротация
+- Fallback chains
+
+### Multiple Short IDs
+- 3 Short ID для rotation
+- Повышенная безопасность
+- Anti-detection
 
 ## 🎉 Что нового в v2.0
 
@@ -82,10 +100,24 @@
 - Root доступ
 - Публичный IP адрес
 
-### Вариант 1: Новая установка (все протоколы)
+### 🔥 ULTIMATE установка (рекомендуется)
 
 ```bash
-wget -O - https://raw.githubusercontent.com/sjgagahvabw/vpn-shield/main/optimized-install.sh | bash
+wget -O - https://raw.githubusercontent.com/sjgagahvabw/vpn-shield/main/ultimate-install.sh | bash
+```
+
+**Что установится:**
+- ✅ VLESS + REALITY + TCP (443) - основной
+- ✅ VLESS + XHTTP + REALITY (8443) - **новейший**
+- ✅ Shadowsocks 2022 (8388) - быстрый
+- ✅ BBR v3 оптимизация
+- ✅ Smart SNI rotation
+- ✅ QR коды для всех
+
+### Вариант 2: Классическая установка
+
+```bash
+wget -O - https://raw.githubusercontent.com/sjgagahvabw/vpn-shield/main/auto-vpn-install.sh | bash
 ```
 
 Скрипт автоматически:
